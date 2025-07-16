@@ -1,0 +1,23 @@
+# Bỏ qua thư mục build
+target/
+build/
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Logs & OS files
+*.log
+*.DS_Store
+*.class
+
+# Test reports & temporary files
+test-output/
+*.swp
