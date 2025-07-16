@@ -49,10 +49,13 @@ public class OrganizationController {
     }
 
     // View all events created by this organization
-    @GetMapping("/{orgId}/events")
-    public ResponseEntity<List<?>> getOrganizationEvents(@PathVariable Long orgId) {
-        // TODO: Return list of events for the organization
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<Object[]>> getOrganizationEvents(@PathVariable Long orgId) {
+        List<Object[]> events = List.of(
+                new Object[]{1L, "Book Fair", "Hue", "2025-09-01", "2025-09-03", "Upcoming"},
+                new Object[]{2L, "Charity Run", "Da Lat", "2025-07-15", "2025-07-16", "Ongoing"}
+        );
+
+        return ResponseEntity.ok(events);
     }
 
     // View status of a specific event created by this organization
