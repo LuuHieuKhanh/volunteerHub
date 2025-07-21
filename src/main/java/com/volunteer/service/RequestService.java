@@ -1,6 +1,7 @@
 package com.volunteer.service;
 
 import com.volunteer.entity.Request;
+import com.volunteer.enums.RequestStatus;
 import com.volunteer.repository.RequestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class RequestService {
         logger.info("Approve request called for id: {}", requestId);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
-        request.setStatus("APPROVED");
+        request.setStatus(RequestStatus.APPROVED);
         requestRepository.save(request);
     }
 
@@ -31,7 +32,7 @@ public class RequestService {
         logger.info("Reject request called for id: {}, reason: {}", requestId, reason);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
-        request.setStatus("REJECTED");
+        request.setStatus(RequestStatus.REJECTED);
         request.setDenyReason(reason);
         requestRepository.save(request);
     }

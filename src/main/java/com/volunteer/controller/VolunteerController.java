@@ -22,7 +22,7 @@ public class VolunteerController {
 
     @PostMapping
     public ResponseEntity<VolunteerResponse> createVolunteer(@Valid @RequestBody Volunteer volunteer) {
-        logger.info("Create volunteer endpoint called for username: {}", volunteer.getUsername());
+        logger.info("Create volunteer endpoint called for username: {}", volunteer.getFullName());
         VolunteerResponse response = volunteerService.createVolunteer(volunteer);
         return ResponseEntity.ok(response);
     }

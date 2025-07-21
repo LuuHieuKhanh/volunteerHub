@@ -1,8 +1,10 @@
 package com.volunteer.entity;
 
+import com.volunteer.enums.EEventStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "donation_events")
@@ -10,7 +12,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DonationEvent {
+public class DonationEvent extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,8 +30,9 @@ public class DonationEvent {
     @Column(name = "money_need", nullable = false, precision = 19, scale = 2)
     private BigDecimal moneyNeed;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 50)
-    private String eventStatus;
+    private EEventStatus eventStatus = EEventStatus.UPCOMING;
 
     @Column(name = "has_donate", nullable = false)
     private boolean hasDonate = false;
@@ -45,4 +48,7 @@ public class DonationEvent {
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String pic;
+
+    @OneToMany(mappedBy = "donationEvent")
+    private List<VolunteerDonation> donorList;
 } 

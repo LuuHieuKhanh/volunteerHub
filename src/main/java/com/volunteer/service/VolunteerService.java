@@ -20,7 +20,6 @@ public class VolunteerService {
     private VolunteerRepository volunteerRepository;
 
     public VolunteerResponse createVolunteer(Volunteer volunteer) {
-        logger.info("Creating volunteer: {}", volunteer.getUsername());
         Volunteer saved = volunteerRepository.save(volunteer);
         return toResponse(saved);
     }
@@ -36,8 +35,7 @@ public class VolunteerService {
         logger.info("Updating volunteer id: {}", id);
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Volunteer not found with id: " + id));
-        volunteer.setUsername(updated.getUsername());
-        volunteer.setEmail(updated.getEmail());
+        volunteer.setFullName(updated.getFullName());
         volunteer.setPic(updated.getPic());
         volunteer.setContact(updated.getContact());
         Volunteer saved = volunteerRepository.save(volunteer);
@@ -49,7 +47,7 @@ public class VolunteerService {
         logger.info("Soft delete current user account id: {}", id);
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Volunteer not found with id: " + id));
-        volunteer.setActive(false);
+        volunteer.setDeleted(true);
         volunteer.setDeletedAt(LocalDateTime.now());
         volunteerRepository.save(volunteer);
     }
@@ -65,12 +63,12 @@ public class VolunteerService {
     public VolunteerResponse toResponse(Volunteer volunteer) {
         return new VolunteerResponse(
                 volunteer.getId(),
-                volunteer.getUsername(),
-                volunteer.getEmail(),
+                volunteer.getFullName(),
+                volunteer.getAccount() != null ? volunteer.getAccount().getEmail() : null,
                 volunteer.getPic(),
                 volunteer.getContact(),
                 volunteer.getAccount() != null ? volunteer.getAccount().getId() : null,
-                volunteer.isActive(),
+                volunteer.getAccount() != null && volunteer.getAccount().isActive(),
                 volunteer.getDeletedAt()
         );
     }

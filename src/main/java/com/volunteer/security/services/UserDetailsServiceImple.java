@@ -30,10 +30,10 @@ public class UserDetailsServiceImple implements UserDetailsService {
         Account account = accountOpt.get();
         Optional<Volunteer> volunteerOpt = volunteerRepository.findByEmailAndIsActiveTrue(email);
         Volunteer volunteer = volunteerOpt.orElse(null);
-        GrantedAuthority authority = new SimpleGrantedAuthority(account.getRole());
+        GrantedAuthority authority = new SimpleGrantedAuthority(account.getRole().toString());
         return new UserDetailsImpl(
                 account.getId(),
-                volunteer != null ? volunteer.getUsername() : account.getEmail(),
+                volunteer != null ? volunteer.getFullName() : account.getEmail(),
                 account.getEmail(),
                 account.getPassword(),
                 Collections.singletonList(authority),

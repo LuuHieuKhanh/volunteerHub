@@ -32,6 +32,7 @@ public class JwtUtils {
     public String generateJwtToken(Authentication authentication) {
         String username = authentication.getName();
         Date now = new Date();
+        logger.info("JWT EXPIRATIONS {}", jwtExpirationMs);
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
                 .setSubject(username)

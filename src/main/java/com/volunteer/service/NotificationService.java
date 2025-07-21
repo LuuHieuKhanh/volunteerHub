@@ -34,8 +34,7 @@ public class NotificationService {
                     .eventId(eventId)
                     .volunteerId(participation.getVolunteer().getId())
                     .organizationId(organizationId)
-                    .createdAt(LocalDateTime.now())
-                    .read(false)
+                    .isRead(false)
                     .build();
                 notificationRepository.save(notification);
             }

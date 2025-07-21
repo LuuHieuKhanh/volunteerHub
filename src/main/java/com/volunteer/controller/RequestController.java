@@ -54,7 +54,7 @@ public class RequestController {
                         req.getStatus(),
                         req.getDenyReason(),
                         req.getPic(),
-                        req.getRequestDate()
+                        req.getCreatedAt()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);

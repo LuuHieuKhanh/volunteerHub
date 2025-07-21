@@ -3,8 +3,10 @@ package com.volunteer.controller;
 import com.volunteer.dto.auth.MessageResponse;
 import com.volunteer.dto.request.RequestResponse;
 import com.volunteer.dto.volunteer.VolunteerResponse;
+import com.volunteer.entity.Account;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.Request;
+import com.volunteer.repository.AccountRepository;
 import com.volunteer.repository.OrganizationRepository;
 import com.volunteer.repository.RequestRepository;
 import com.volunteer.repository.VolunteerRepository;
@@ -29,6 +31,8 @@ public class AdminController {
     @Autowired
     private VolunteerRepository volunteerRepository;
     @Autowired
+    private AccountRepository accountRepository;
+    @Autowired
     private RequestRepository requestRepository;
     @Autowired
     private RequestService requestService;
@@ -50,7 +54,13 @@ public class AdminController {
     public ResponseEntity<MessageResponse> updateAccountStatus(@PathVariable Long id, @RequestParam boolean active) {
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Volunteer not found"));
-        volunteer.setActive(active);
+        Account account = volunteer.getAccount();
+        if (account == null) {
+            throw new RuntimeException("Account not linked to this volunteer");
+        }
+
+        account.setActive(active);
+        accountRepository.save(account);
         volunteerRepository.save(volunteer);
         return ResponseEntity.ok(new MessageResponse("Account status updated"));
     }
@@ -82,7 +92,7 @@ public class AdminController {
                         req.getStatus(),
                         req.getDenyReason(),
                         req.getPic(),
-                        req.getRequestDate()
+                        req.getCreatedAt()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
@@ -164,18 +174,18 @@ public class AdminController {
     }
 
     // View all organization upgrade requests
-    @GetMapping("/organization-upgrade-requests")
-    public ResponseEntity<List<?>> getAllOrganizationUpgradeRequests() {
-        // TODO: Return all organization upgrade requests
-        return ResponseEntity.ok(List.of());
-    }
+//    @GetMapping("/organization-upgrade-requests")
+//    public ResponseEntity<List<?>> getAllOrganizationUpgradeRequests() {
+//        // TODO: Return all organization upgrade requests
+//        return ResponseEntity.ok(List.of());
+//    }
 
     // View all user accounts
-    @GetMapping("/accounts")
-    public ResponseEntity<List<?>> getAllUserAccounts() {
-        // TODO: Return all user accounts
-        return ResponseEntity.ok(List.of());
-    }
+//    @GetMapping("/accounts")
+//    public ResponseEntity<List<?>> getAllUserAccounts() {
+//        // TODO: Return all user accounts
+//        return ResponseEntity.ok(List.of());
+//    }
 
     // View all admin users
     @GetMapping("/admins")

@@ -9,7 +9,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=volunteer;encrypt=true;trustServerCertificate=true
       SPRING_DATASOURCE_USERNAME: sa
-      SPRING_DATASOURCE_PASSWORD: 123
+      SPRING_DATASOURCE_PASSWORD: User12345678
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
     depends_on:
@@ -23,11 +23,10 @@ services:
       - "1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "123"
-      MSSQL_PID: "Express"
+      MSSQL_SA_PASSWORD: "User12345678"
     volumes:
       - sqlserver-data:/var/opt/mssql
-    restart: unless-stopped
+#      - ./sqlserver-data/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   sqlserver-data:

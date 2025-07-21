@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "organization")
+@Table(name = "organizations")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Organization {
+public class Organization extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

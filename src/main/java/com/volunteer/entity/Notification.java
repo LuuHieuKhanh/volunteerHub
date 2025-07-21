@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Notification {
+public class Notification extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,6 +19,5 @@ public class Notification {
     private Long eventId;
     private Long volunteerId;
     private Long organizationId;
-    private LocalDateTime createdAt;
-    private boolean read;
+    private boolean isRead = false;
 } 

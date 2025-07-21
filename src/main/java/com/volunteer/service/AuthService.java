@@ -55,10 +55,8 @@ public class AuthService {
         accountRepository.save(account);
         // Create Volunteer
         Volunteer volunteer = new Volunteer();
-        volunteer.setUsername(signUpRequest.getUsername());
-        volunteer.setEmail(signUpRequest.getEmail());
+        volunteer.setFullName(signUpRequest.getUsername());
         volunteer.setAccount(account);
-        volunteer.setActive(true);
         volunteerRepository.save(volunteer);
         // Auto-login after signup
         LoginRequest loginRequest = new LoginRequest();
