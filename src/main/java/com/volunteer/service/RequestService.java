@@ -15,9 +15,9 @@ public class RequestService {
     @Autowired
     private RequestRepository requestRepository;
 
-    public void createRequest(Request request) {
+    public Request createRequest(Request request) {
         logger.info("Create request called: {}", request);
-        requestRepository.save(request);
+        return requestRepository.save(request);
     }
 
     public void approveRequest(Long requestId) {

@@ -17,15 +17,15 @@ public class Volunteer extends BaseEntity {
     private Long id;
 
     @Column(length = 100)
-    private String fullName;
+    private String fullName = "";
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
-    private String pic;
+    private String pic = "";
 
     @Column(length = 20)
-    private String contact;
+    private String contact = "";
 
-    @Column(name = "is_banned", nullable = false)
+    @Column(name = "is_banned", nullable = false, columnDefinition = "bit default 0")
     private boolean isBanned = false;
 
     @OneToOne(fetch = FetchType.LAZY)

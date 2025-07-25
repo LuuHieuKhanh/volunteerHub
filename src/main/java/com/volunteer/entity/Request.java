@@ -36,7 +36,5 @@ public class Request extends BaseEntity {
     @Column(name = "deny_reason", columnDefinition = "NVARCHAR(MAX)")
     private String denyReason;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    private String pic;
 }
 

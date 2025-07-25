@@ -40,12 +40,10 @@ public class AuthService {
     @Transactional
     public JwtResponse signup(SignupRequest signUpRequest) {
         logger.info("Signup method called for email: {}", signUpRequest.getEmail());
-        if (accountRepository.findByEmailAndIsActiveTrue(signUpRequest.getEmail()).isPresent()) {
+        if (accountRepository.findByEmail(signUpRequest.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use!");
         }
-        if (volunteerRepository.findByUsernameAndIsActiveTrue(signUpRequest.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken!");
-        }
+
         // Create Account
         Account account = new Account();
         account.setEmail(signUpRequest.getEmail());
@@ -53,9 +51,10 @@ public class AuthService {
         account.setRole(signUpRequest.getRole());
         account.setActive(true);
         accountRepository.save(account);
+        System.out.println("Account created");
         // Create Volunteer
         Volunteer volunteer = new Volunteer();
-        volunteer.setFullName(signUpRequest.getUsername());
+        volunteer.setFullName(signUpRequest.getFullName());
         volunteer.setAccount(account);
         volunteerRepository.save(volunteer);
         // Auto-login after signup

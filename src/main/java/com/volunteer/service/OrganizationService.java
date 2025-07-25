@@ -23,16 +23,18 @@ public class OrganizationService {
     private VolunteerRepository volunteerRepository;
 
     @Transactional
-    public OrganizationResponse createOrganization(OrganizationRequest request) {
+    public Organization createOrganization(OrganizationRequest request) {
         logger.info("Creating organization: {}", request.getOrganizationName());
         Volunteer volunteer = volunteerRepository.findById(request.getVolunteerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Volunteer not found with id: " + request.getVolunteerId()));
         Organization org = new Organization();
         org.setOrganizationName(request.getOrganizationName());
         org.setDescription(request.getDescription());
+        org.setLogo(request.getLogo());
+        org.setCertificate(request.getCertificate());
         org.setVolunteer(volunteer);
         Organization saved = organizationRepository.save(org);
-        return toResponse(saved);
+        return saved;
     }
 
     public OrganizationResponse getOrganizationById(Long id) {

@@ -23,12 +23,31 @@ public class UserDetailsServiceImple implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Optional<Account> accountOpt = accountRepository.findByEmailAndIsActiveTrue(email);
+        Optional<Account> accountOpt = accountRepository.findByEmail(email);
         if (!accountOpt.isPresent()) {
             throw new UsernameNotFoundException("Account not found or inactive with email: " + email);
         }
         Account account = accountOpt.get();
-        Optional<Volunteer> volunteerOpt = volunteerRepository.findByEmailAndIsActiveTrue(email);
+        Optional<Volunteer> volunteerOpt = volunteerRepository.findByAccount_EmailAndAccount_IsActive(email, true);
+        Volunteer volunteer = volunteerOpt.orElse(null);
+        GrantedAuthority authority = new SimpleGrantedAuthority(account.getRole().toString());
+        return new UserDetailsImpl(
+                account.getId(),
+                account.getEmail(),
+                account.getEmail(),
+                account.getPassword(),
+                Collections.singletonList(authority),
+                account.isActive()
+        );
+    }
+
+    public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
+        Optional<Account> accountOpt = accountRepository.findByEmail(email);
+        if (!accountOpt.isPresent()) {
+            throw new UsernameNotFoundException("Account not found or inactive with email: " + email);
+        }
+        Account account = accountOpt.get();
+        Optional<Volunteer> volunteerOpt = volunteerRepository.findByAccount_EmailAndAccount_IsActive(email, true);
         Volunteer volunteer = volunteerOpt.orElse(null);
         GrantedAuthority authority = new SimpleGrantedAuthority(account.getRole().toString());
         return new UserDetailsImpl(

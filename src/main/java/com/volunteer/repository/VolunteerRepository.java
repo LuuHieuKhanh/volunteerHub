@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VolunteerRepository extends JpaRepository<Volunteer, Long> {
-    Optional<Volunteer> findByUsernameAndIsActiveTrue(String username);
-    Optional<Volunteer> findByEmailAndIsActiveTrue(String email);
-    List<Volunteer> findByAccount_RoleAndIsActiveTrue(Role role);
-    List<Volunteer> findByIsActiveTrue();
+    Optional<Volunteer> findByFullName(String username);
+
+    Optional<Volunteer> findByAccount_EmailAndAccount_IsActive(String accountEmail, boolean accountActive);
+    List<Volunteer> findByAccount_Role(Role role);
+    List<Volunteer> findByAccount_IsActive(boolean active);
 } 

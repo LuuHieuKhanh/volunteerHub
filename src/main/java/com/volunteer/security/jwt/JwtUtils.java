@@ -1,5 +1,7 @@
 package com.volunteer.security.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -52,5 +54,19 @@ public class JwtUtils {
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Claims decodeJwt(String token) {
+        try {
+            logger.info("Decoding JWT {}", token);
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody(); // Trả về payload (Claims)
+        } catch (JwtException e) {
+            logger.error("Invalid JWT token: {}", e.getMessage());
+            return null;
+        }
     }
 } 

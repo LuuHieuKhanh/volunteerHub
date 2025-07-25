@@ -2,6 +2,7 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.organization.OrganizationRequest;
 import com.volunteer.dto.organization.OrganizationResponse;
+import com.volunteer.entity.Organization;
 import com.volunteer.service.OrganizationService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -21,9 +22,9 @@ public class OrganizationController {
     private OrganizationService organizationService;
 
     @PostMapping
-    public ResponseEntity<OrganizationResponse> createOrganization(@Valid @RequestBody OrganizationRequest request) {
+    public ResponseEntity<Organization> createOrganization(@Valid @RequestBody OrganizationRequest request) {
         logger.info("Create organization endpoint called for name: {}", request.getOrganizationName());
-        OrganizationResponse response = organizationService.createOrganization(request);
+        Organization response = organizationService.createOrganization(request);
         return ResponseEntity.ok(response);
     }
 

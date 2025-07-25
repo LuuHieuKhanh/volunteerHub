@@ -6,6 +6,7 @@ import com.volunteer.dto.volunteer.VolunteerResponse;
 import com.volunteer.entity.Account;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.Request;
+import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.AccountRepository;
 import com.volunteer.repository.OrganizationRepository;
 import com.volunteer.repository.RequestRepository;
@@ -83,16 +84,26 @@ public class AdminController {
     @GetMapping("/organization-upgrade-requests")
     public ResponseEntity<List<RequestResponse>> getAllUpgradeRequests() {
         List<Request> requests = requestRepository.findAll(); // You may want to filter by type/status
+
+        if (requests.isEmpty()) {
+            throw new ResourceNotFoundException("NOT FOUND");
+        }
+
         List<RequestResponse> response = requests.stream()
                 .map(req -> new RequestResponse(
                         req.getId(),
-                        req.getRequestType(),
-                        req.getVolunteer() != null ? req.getVolunteer().getId() : null,
-                        req.getOrganization() != null ? req.getOrganization().getId() : null,
-                        req.getStatus(),
+                        req.getOrganization().getOrganizationName(),
+                        req.getVolunteer().getFullName(),
+                        req.getVolunteer().getAccount().getEmail(),
+                        req.getVolunteer().getContact(),
+                        req.getOrganization().getDescription(),
                         req.getDenyReason(),
-                        req.getPic(),
-                        req.getCreatedAt()
+                        req.getOrganization().getLogo(),
+                        req.getOrganization().getCertificate(),
+                        req.getRequestType(),
+                        req.getVolunteer().getId(),
+                        req.getStatus(),
+                        req.getUpdatedAt()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);

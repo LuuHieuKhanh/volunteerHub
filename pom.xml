@@ -17,6 +17,7 @@
     </properties>
     <dependencyManagement>
         <dependencies>
+            <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/s3 -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -27,6 +28,12 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+            <version>1.12.788</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

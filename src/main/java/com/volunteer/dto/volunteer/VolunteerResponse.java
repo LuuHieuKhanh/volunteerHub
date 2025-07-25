@@ -1,6 +1,8 @@
 package com.volunteer.dto.volunteer;
 
 import java.time.LocalDateTime;
+
+import com.volunteer.enums.Role;
 import lombok.Data;
 
 @Data
@@ -13,10 +15,11 @@ public class VolunteerResponse {
     private Long accountId;
     private boolean isActive;
     private LocalDateTime deletedAt;
+    private Role role;
 
     public VolunteerResponse() {}
 
-    public VolunteerResponse(Long id, String username, String email, String pic, String contact, Long accountId, boolean isActive, LocalDateTime deletedAt) {
+    public VolunteerResponse(Long id, String username, String email, String pic, String contact, Long accountId, boolean isActive, LocalDateTime deletedAt, Role role) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -25,5 +28,6 @@ public class VolunteerResponse {
         this.accountId = accountId;
         this.isActive = isActive;
         this.deletedAt = deletedAt;
+        this.role = role;
     }
 } 

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 public abstract class BaseEntity {
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -29,6 +29,7 @@ public abstract class BaseEntity {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate

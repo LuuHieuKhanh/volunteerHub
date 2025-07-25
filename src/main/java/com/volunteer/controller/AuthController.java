@@ -5,14 +5,27 @@ import com.volunteer.dto.auth.LoginRequest;
 import com.volunteer.dto.auth.SignupRequest;
 import com.volunteer.dto.auth.TokenRefreshRequest;
 import com.volunteer.dto.auth.TokenRefreshResponse;
+import com.volunteer.dto.volunteer.VolunteerResponse;
+import com.volunteer.entity.Volunteer;
+import com.volunteer.repository.VolunteerRepository;
+import com.volunteer.security.jwt.JwtUtils;
+import com.volunteer.security.services.UserDetailsServiceImple;
 import com.volunteer.service.AuthService;
+import com.volunteer.service.VolunteerService;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -20,6 +33,13 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    private VolunteerService  volunteerService;
+    private JwtUtils jwtUtils;
+
+    public AuthController(JwtUtils jwtUtils, VolunteerService volunteerService) {
+        this.jwtUtils = jwtUtils;
+        this.volunteerService = volunteerService;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<JwtResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
@@ -33,6 +53,28 @@ public class AuthController {
         logger.info("Signin endpoint called for email: {}", loginRequest.getEmail());
         JwtResponse jwtResponse = authService.signin(loginRequest);
         return ResponseEntity.ok(jwtResponse);
+    }
+
+    @GetMapping("/authenticated")
+    public ResponseEntity<?> authenticated(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+            }
+
+            String token = authHeader.substring(7); // Bỏ "Bearer "
+            Claims claims = jwtUtils.decodeJwt(token);
+            if (claims == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+            logger.info("Claims: {}", claims);
+            String email = claims.getSubject(); // lấy từ .setSubject(...) khi tạo token
+
+            VolunteerResponse volunteer = volunteerService.getVolunteerByEmail(email, true);
+            return ResponseEntity.ok(volunteer);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
     }
 
     @PostMapping("/refresh")

@@ -24,6 +24,14 @@ public class VolunteerService {
         return toResponse(saved);
     }
 
+    public VolunteerResponse getVolunteerByEmail(String email, boolean isActive) {
+        logger.info("getVolunteerByEmail");
+        Optional<Volunteer> volunteer = volunteerRepository.findByAccount_EmailAndAccount_IsActive(email, isActive);
+        return volunteer
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Volunteer not found with email: " + email));
+    }
+
     public VolunteerResponse getVolunteerById(Long id) {
         logger.info("Fetching volunteer by id: {}", id);
         Volunteer volunteer = volunteerRepository.findById(id)
@@ -69,7 +77,8 @@ public class VolunteerService {
                 volunteer.getContact(),
                 volunteer.getAccount() != null ? volunteer.getAccount().getId() : null,
                 volunteer.getAccount() != null && volunteer.getAccount().isActive(),
-                volunteer.getDeletedAt()
+                volunteer.getDeletedAt(),
+                volunteer.getAccount().getRole()
         );
     }
 } 
