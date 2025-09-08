@@ -1,11 +1,13 @@
 package com.volunteer.enums;
 
 public enum EEventStatus {
-    UPCOMING,
+    upcoming,
     ONGOING,
-    COMPLETED,
+    completed,
     CANCELLED,
     OPEN,
     CLOSED,
-    FULFILLED
-} 
+    FULFILLED,
+    active,
+    inactive,
+}

@@ -13,9 +13,12 @@ import java.util.UUID;
 @Service("awsS3StorageService")
 public class AwsS3StorageService implements FileStorageInterfaceService {
 
-
+    private final String UPLOAD_DIR = "uploads/";
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
+
+    @Value("${app.file-base-url}")
+    private String domain;
 
     private final AmazonS3 amazonS3;
 
@@ -35,5 +38,10 @@ public class AwsS3StorageService implements FileStorageInterfaceService {
     public void deleteFile(String fileUrl) throws IOException {
         String key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
         amazonS3.deleteObject(bucketName, key);
+    }
+
+    @Override
+    public String getFullFileUrl(String fileName) {
+        return domain + fileName;
     }
 }

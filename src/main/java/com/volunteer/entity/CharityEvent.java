@@ -27,6 +27,12 @@ public class CharityEvent extends BaseEntity {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String todo;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String requirement;
+
     @Column(length = 255)
     private String destination;
 
@@ -50,7 +56,7 @@ public class CharityEvent extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 50)
-    private EEventStatus eventStatus = EEventStatus.UPCOMING;
+    private EEventStatus eventStatus = EEventStatus.upcoming;
 
     @OneToMany(mappedBy = "charityEvent")
     private List<VolunteerCharityEvent> participants;

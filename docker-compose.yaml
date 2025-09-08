@@ -1,20 +1,20 @@
 services:
-  volunteer-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: volunteer-app
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=volunteer;encrypt=true;trustServerCertificate=true
-      SPRING_DATASOURCE_USERNAME: sa
-      SPRING_DATASOURCE_PASSWORD: User12345678
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-    depends_on:
-      - sqlserver
-    restart: unless-stopped
+#  volunteer-app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: volunteer-app
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=volunteer;encrypt=true;trustServerCertificate=true
+#      SPRING_DATASOURCE_USERNAME: sa
+#      SPRING_DATASOURCE_PASSWORD: User12345678
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#      SPRING_JPA_SHOW_SQL: "true"
+#    depends_on:
+#      - sqlserver
+#    restart: unless-stopped
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -26,7 +26,16 @@ services:
       MSSQL_SA_PASSWORD: "User12345678"
     volumes:
       - sqlserver-data:/var/opt/mssql
-#      - ./sqlserver-data/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - sqlserver
+    volumes:
+      - ./init.sql:/init.sql
+    entrypoint: /bin/bash -c "
+      sleep 20 &&
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P User12345678 -d master -i /init.sql
+      "
 volumes:
   sqlserver-data:

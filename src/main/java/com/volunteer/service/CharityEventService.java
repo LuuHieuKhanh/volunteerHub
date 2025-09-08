@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,9 +25,11 @@ public class CharityEventService {
     private CharityEventRepository charityEventRepository;
     @Autowired
     private OrganizationRepository organizationRepository;
+    @Autowired
+    private LocalStorageService localStorageService;
 
     @Transactional
-    public CharityEventResponse createCharityEvent(CharityEventRequest request) {
+    public CharityEventResponse createCharityEvent(CharityEventRequest request) throws IOException {
         logger.info("Creating charity event: {}", request.getCharityName());
         Organization org = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + request.getOrganizationId()));
@@ -33,13 +38,25 @@ public class CharityEventService {
         event.setOrganization(org);
         event.setDescription(request.getDescription());
         event.setDestination(request.getDestination());
+        event.setTodo(request.getTodo());
+        event.setRequirement(request.getRequirement());
         event.setDateStart(request.getDateStart());
         event.setDateEnd(request.getDateEnd());
         event.setNumVolunteerRequire(request.getNumVolunteerRequire());
         event.setNote(request.getNote());
-        event.setPic(request.getPic());
+        if (request.getPic() != null && !request.getPic().isEmpty()) {
+            String filePath = localStorageService.uploadFile(request.getPic());
+            event.setPic(filePath);
+        }
         CharityEvent saved = charityEventRepository.save(event);
         return toResponse(saved);
+    }
+
+    public List<CharityEventResponse> getCharitiesByOrganization(Long organizationId) {
+        List<CharityEvent> events = charityEventRepository.findByOrganization_Id(organizationId);
+        return events.stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public CharityEventResponse getCharityEventById(Long id) {
@@ -50,7 +67,7 @@ public class CharityEventService {
     }
 
     @Transactional
-    public CharityEventResponse updateCharityEvent(Long id, CharityEventRequest request) {
+    public CharityEventResponse updateCharityEvent(Long id, CharityEventRequest request) throws IOException {
         logger.info("Updating charity event id: {}", id);
         CharityEvent event = charityEventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
@@ -61,7 +78,10 @@ public class CharityEventService {
         event.setDateEnd(request.getDateEnd());
         event.setNumVolunteerRequire(request.getNumVolunteerRequire());
         event.setNote(request.getNote());
-        event.setPic(request.getPic());
+        if (request.getPic() != null && !request.getPic().isEmpty()) {
+            String filePath = localStorageService.uploadFile(request.getPic());
+            event.setPic(filePath);
+        }
         CharityEvent saved = charityEventRepository.save(event);
         return toResponse(saved);
     }
@@ -86,7 +106,7 @@ public class CharityEventService {
                 event.getNumVolunteerRequire(),
                 event.getNumVolunteerActual(),
                 event.getNote(),
-                event.getPic(),
+                localStorageService.getFullFileUrl(event.getPic()),
                 event.getEventStatus() != null ? event.getEventStatus().toString() : null
         );
     }

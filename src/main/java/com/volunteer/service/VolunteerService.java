@@ -78,7 +78,8 @@ public class VolunteerService {
                 volunteer.getAccount() != null ? volunteer.getAccount().getId() : null,
                 volunteer.getAccount() != null && volunteer.getAccount().isActive(),
                 volunteer.getDeletedAt(),
-                volunteer.getAccount().getRole()
+                volunteer.getAccount().getRole(),
+                Optional.ofNullable(volunteer.getOrganization() != null ? volunteer.getOrganization().getId() : null)
         );
     }
 } 

@@ -38,4 +38,6 @@ public class Volunteer extends BaseEntity {
     @OneToMany(mappedBy = "volunteer")
     private List<VolunteerDonation> donations;
 
+    @OneToOne(mappedBy = "volunteer", fetch = FetchType.LAZY)
+    private Organization organization;
 }

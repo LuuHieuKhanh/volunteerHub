@@ -32,7 +32,7 @@ public class DonationEvent extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 50)
-    private EEventStatus eventStatus = EEventStatus.UPCOMING;
+    private EEventStatus eventStatus = EEventStatus.upcoming;
 
     @Column(name = "has_donate", nullable = false)
     private boolean hasDonate = false;

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class CharityEventRequest {
@@ -16,6 +17,9 @@ public class CharityEventRequest {
 
     private String description;
     private String destination;
+
+    private String todo;
+    private String requirement;
 
     @NotNull
     @Future
@@ -29,5 +33,5 @@ public class CharityEventRequest {
     private Long numVolunteerRequire;
 
     private String note;
-    private String pic;
-} 
+    private MultipartFile pic;  // nhận file upload
+}

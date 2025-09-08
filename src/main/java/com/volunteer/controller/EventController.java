@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -27,10 +28,16 @@ public class EventController {
 
     // Charity Event Endpoints
     @PostMapping("/charity")
-    public ResponseEntity<CharityEventResponse> createCharityEvent(@Valid @RequestBody CharityEventRequest request) {
+    public ResponseEntity<CharityEventResponse> createCharityEvent(@ModelAttribute @Valid CharityEventRequest request) throws IOException {
         logger.info("Create charity event endpoint called for name: {}", request.getCharityName());
         CharityEventResponse response = charityEventService.createCharityEvent(request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/charity/{organizationId}/organization")
+    public ResponseEntity<List<CharityEventResponse>> getCharitiesByOrganization(
+            @PathVariable("organizationId") Long organizationId) {
+        return ResponseEntity.ok(charityEventService.getCharitiesByOrganization(organizationId));
     }
 
     @GetMapping("/charity/{id}")
@@ -41,7 +48,7 @@ public class EventController {
     }
 
     @PutMapping("/charity/{id}")
-    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable Long id, @Valid @RequestBody CharityEventRequest request) {
+    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable Long id, @Valid @RequestBody CharityEventRequest request) throws IOException {
         logger.info("Update charity event endpoint called for id: {}", id);
         CharityEventResponse response = charityEventService.updateCharityEvent(id, request);
         return ResponseEntity.ok(response);
