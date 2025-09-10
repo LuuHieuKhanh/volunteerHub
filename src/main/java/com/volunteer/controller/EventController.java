@@ -1,9 +1,6 @@
 package com.volunteer.controller;
 
-import com.volunteer.dto.event.CharityEventRequest;
-import com.volunteer.dto.event.CharityEventResponse;
-import com.volunteer.dto.event.DonationEventRequest;
-import com.volunteer.dto.event.DonationEventResponse;
+import com.volunteer.dto.event.*;
 import com.volunteer.service.CharityEventService;
 import com.volunteer.service.DonationEventService;
 import jakarta.validation.Valid;
@@ -26,6 +23,14 @@ public class EventController {
     @Autowired
     private DonationEventService donationEventService;
 
+    @GetMapping("/charity")
+    public ResponseEntity<List<CharityEventResponseList>> searchCharitiesByOrganization(
+            @RequestParam(value = "id", required = false) Long volunteerId // truyền volunteerId để check joined
+    ) {
+        List<CharityEventResponseList> result = charityEventService.getAllCharities(volunteerId);
+        return ResponseEntity.ok(result);
+    }
+
     // Charity Event Endpoints
     @PostMapping("/charity")
     public ResponseEntity<CharityEventResponse> createCharityEvent(@ModelAttribute @Valid CharityEventRequest request) throws IOException {
@@ -36,8 +41,14 @@ public class EventController {
 
     @GetMapping("/charity/{organizationId}/organization")
     public ResponseEntity<List<CharityEventResponse>> getCharitiesByOrganization(
-            @PathVariable("organizationId") Long organizationId) {
-        return ResponseEntity.ok(charityEventService.getCharitiesByOrganization(organizationId));
+            @PathVariable("organizationId") Long organizationId,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "from", required = false) String from,
+            @RequestParam(value = "to", required = false) String to
+            ) {
+        return ResponseEntity.ok(
+                charityEventService.getCharitiesByOrganization(organizationId, name, from, to)
+        );
     }
 
     @GetMapping("/charity/{id}")

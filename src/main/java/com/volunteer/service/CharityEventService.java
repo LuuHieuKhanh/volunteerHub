@@ -2,11 +2,13 @@ package com.volunteer.service;
 
 import com.volunteer.dto.event.CharityEventRequest;
 import com.volunteer.dto.event.CharityEventResponse;
+import com.volunteer.dto.event.CharityEventResponseList;
 import com.volunteer.entity.CharityEvent;
 import com.volunteer.entity.Organization;
 import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.CharityEventRepository;
 import com.volunteer.repository.OrganizationRepository;
+import com.volunteer.repository.VolunteerCharityEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +31,37 @@ public class CharityEventService {
     @Autowired
     private OrganizationRepository organizationRepository;
     @Autowired
+    private VolunteerCharityEventRepository volunteerCharityEventRepository;
+    @Autowired
     private LocalStorageService localStorageService;
+
+    public List<CharityEventResponseList> getAllCharities(Long volunteerId) {
+        List<CharityEvent> events = charityEventRepository.findAll();
+
+        return events.stream().map(event -> {
+            boolean joined = volunteerCharityEventRepository
+                    .existsByVolunteerIdAndCharityEventId(volunteerId, event.getId());
+
+            return CharityEventResponseList.builder()
+                    .id(event.getId())
+                    .pic(localStorageService.getFullFileUrl(event.getPic()))
+                    .name(event.getCharityName())
+                    .description(event.getDescription())
+                    .requirement(event.getRequirement())
+                    .destination(event.getDestination())
+                    .dateStart(event.getDateStart())
+                    .organization(CharityEventResponseList.OrganizationDto.builder()
+                            .id(event.getOrganization().getId())
+                            .name(event.getOrganization().getOrganizationName())
+                            .avatar(
+                            Optional.ofNullable(event.getOrganization().getLogo())
+                                    .map(localStorageService::getFullFileUrl)
+                                    .orElse(null))
+                            .build())
+                    .joined(joined)
+                    .build();
+        }).toList();
+    }
 
     @Transactional
     public CharityEventResponse createCharityEvent(CharityEventRequest request) throws IOException {
@@ -52,8 +87,31 @@ public class CharityEventService {
         return toResponse(saved);
     }
 
-    public List<CharityEventResponse> getCharitiesByOrganization(Long organizationId) {
-        List<CharityEvent> events = charityEventRepository.findByOrganization_Id(organizationId);
+    public List<CharityEventResponse> getCharitiesByOrganization(
+            Long organizationId,
+            String name,
+            String from,
+            String to
+    ) {
+        LocalDateTime fromDateTime = null;
+        LocalDateTime toDateTime = null;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        if (from != null && !from.isEmpty()) {
+            fromDateTime = LocalDate.parse(from, formatter).atStartOfDay();
+            // 2025-09-10T00:00:00
+        }
+
+        if (to != null && !to.isEmpty()) {
+            toDateTime = LocalDate.parse(to, formatter).atTime(23, 59, 59);
+            // 2025-09-10T23:59:59
+        }
+
+        List<CharityEvent> events = charityEventRepository.searchCharitiesByOrganization(
+                organizationId, name, fromDateTime, toDateTime
+        );
+
         return events.stream()
                 .map(this::toResponse)
                 .toList();

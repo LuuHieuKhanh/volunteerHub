@@ -12,4 +12,5 @@ public interface VolunteerCharityEventRepository extends JpaRepository<Volunteer
     Optional<VolunteerCharityEvent> findByVolunteerAndCharityEvent(Volunteer volunteer, CharityEvent charityEvent);
     List<VolunteerCharityEvent> findByVolunteer_IdAndJoinStatus(Long volunteerId, EJoinStatus joinStatus);
     List<VolunteerCharityEvent> findByCharityEvent_IdAndJoinStatus(Long charityEventId, EJoinStatus joinStatus);
-} 
+    boolean existsByVolunteerIdAndCharityEventId(Long volunteerId, Long charityEventId);
+}
