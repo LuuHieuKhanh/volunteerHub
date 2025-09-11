@@ -60,4 +60,20 @@ public class CharityEvent extends BaseEntity {
 
     @OneToMany(mappedBy = "charityEvent")
     private List<VolunteerCharityEvent> participants;
+
+    public void increaseVolunteerCount() {
+        if (this.numVolunteerActual == null) {
+            this.numVolunteerActual = 0L;
+        }
+        this.numVolunteerActual++;
+    }
+
+    public void decreaseVolunteerCount() {
+        if (this.numVolunteerActual == null) {
+            this.numVolunteerActual = 0L;
+        }
+        if (this.numVolunteerActual > 0) {
+            this.numVolunteerActual--;
+        }
+    }
 } 

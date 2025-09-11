@@ -17,8 +17,11 @@ public class CharityEventResponseList {
     private String name;
     private String description;
     private String requirement;
+    private String todo;
     private String destination;
     private LocalDateTime dateStart;
+    private Long numVolunteerRequire;
+    private Long numVolunteerActual;
 
     private OrganizationDto organization;
 

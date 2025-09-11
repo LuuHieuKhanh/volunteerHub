@@ -5,10 +5,14 @@ import com.volunteer.dto.event.CharityEventResponse;
 import com.volunteer.dto.event.CharityEventResponseList;
 import com.volunteer.entity.CharityEvent;
 import com.volunteer.entity.Organization;
+import com.volunteer.entity.Volunteer;
+import com.volunteer.entity.VolunteerCharityEvent;
+import com.volunteer.enums.EJoinStatus;
 import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.CharityEventRepository;
 import com.volunteer.repository.OrganizationRepository;
 import com.volunteer.repository.VolunteerCharityEventRepository;
+import com.volunteer.repository.VolunteerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +38,8 @@ public class CharityEventService {
     private VolunteerCharityEventRepository volunteerCharityEventRepository;
     @Autowired
     private LocalStorageService localStorageService;
+    @Autowired
+    private VolunteerRepository volunteerRepository;
 
     public List<CharityEventResponseList> getAllCharities(Long volunteerId) {
         List<CharityEvent> events = charityEventRepository.findAll();
@@ -48,8 +54,11 @@ public class CharityEventService {
                     .name(event.getCharityName())
                     .description(event.getDescription())
                     .requirement(event.getRequirement())
+                    .todo(event.getTodo())
                     .destination(event.getDestination())
                     .dateStart(event.getDateStart())
+                    .numVolunteerRequire(event.getNumVolunteerRequire())
+                    .numVolunteerActual(event.getNumVolunteerActual())
                     .organization(CharityEventResponseList.OrganizationDto.builder()
                             .id(event.getOrganization().getId())
                             .name(event.getOrganization().getOrganizationName())
@@ -117,11 +126,76 @@ public class CharityEventService {
                 .toList();
     }
 
-    public CharityEventResponse getCharityEventById(Long id) {
-        logger.info("Fetching charity event by id: {}", id);
-        CharityEvent event = charityEventRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
-        return toResponse(event);
+    public CharityEventResponseList getCharityById(Long charityId, Long volunteerId) {
+        CharityEvent event = charityEventRepository.findById(charityId)
+                .orElseThrow(() -> new RuntimeException("Charity event not found"));
+
+        boolean joined = false;
+        if (volunteerId != null) {
+            joined = volunteerCharityEventRepository.existsByVolunteerIdAndCharityEventId(volunteerId, event.getId());
+        }
+
+        return CharityEventResponseList.builder()
+                .id(event.getId())
+                .pic(localStorageService.getFullFileUrl(event.getPic()))
+                .name(event.getCharityName())
+                .description(event.getDescription())
+                .requirement(event.getRequirement())
+                .todo(event.getTodo())
+                .destination(event.getDestination())
+                .dateStart(event.getDateStart())
+                .numVolunteerRequire(event.getNumVolunteerRequire())
+                .numVolunteerActual(event.getNumVolunteerActual())
+                .organization(CharityEventResponseList.OrganizationDto.builder()
+                        .id(event.getOrganization().getId())
+                        .name(event.getOrganization().getOrganizationName())
+                        .avatar(Optional.ofNullable(event.getOrganization().getLogo())
+                                .map(localStorageService::getFullFileUrl)
+                                .orElse(null))
+                        .build())
+                .joined(joined)
+                .build();
+    }
+
+    public void joinProgram(Long eventId, Long volunteerId) {
+        CharityEvent event = charityEventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        Volunteer volunteer = volunteerRepository.findById(volunteerId)
+                .orElseThrow(() -> new RuntimeException("Volunteer not found"));
+
+        // Check nếu đã join rồi
+        if (volunteerCharityEventRepository.existsByVolunteerAndCharityEvent(volunteer, event)) {
+            throw new RuntimeException("Already joined this program");
+        }
+
+        VolunteerCharityEvent vce = VolunteerCharityEvent.builder()
+                .volunteer(volunteer)
+                .charityEvent(event)
+                .joinStatus(EJoinStatus.REGISTERED) // mặc định khi join
+                .build();
+
+        volunteerCharityEventRepository.save(vce);
+
+        event.increaseVolunteerCount();
+        charityEventRepository.save(event);
+    }
+
+
+    public void leaveProgram(Long eventId, Long volunteerId) {
+        CharityEvent event = charityEventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        Volunteer volunteer = volunteerRepository.findById(volunteerId)
+                .orElseThrow(() -> new RuntimeException("Volunteer not found"));
+
+        VolunteerCharityEvent vce = volunteerCharityEventRepository
+                .findByVolunteerAndCharityEvent(volunteer, event)
+                .orElseThrow(() -> new RuntimeException("Not joined this program"));
+
+        volunteerCharityEventRepository.delete(vce);
+
+        event.decreaseVolunteerCount();
+        charityEventRepository.save(event);
     }
 
     @Transactional
