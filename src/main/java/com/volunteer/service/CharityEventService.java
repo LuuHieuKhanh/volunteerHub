@@ -24,6 +24,7 @@ import java.util.Optional;
 
 @Service
 public class CharityEventService {
+
     private static final Logger logger = LoggerFactory.getLogger(CharityEventService.class);
 
     @Autowired
@@ -54,9 +55,9 @@ public class CharityEventService {
                             .id(event.getOrganization().getId())
                             .name(event.getOrganization().getOrganizationName())
                             .avatar(
-                            Optional.ofNullable(event.getOrganization().getLogo())
-                                    .map(localStorageService::getFullFileUrl)
-                                    .orElse(null))
+                                    Optional.ofNullable(event.getOrganization().getLogo())
+                                            .map(localStorageService::getFullFileUrl)
+                                            .orElse(null))
                             .build())
                     .joined(joined)
                     .build();
@@ -165,7 +166,7 @@ public class CharityEventService {
                 event.getNumVolunteerActual(),
                 event.getNote(),
                 localStorageService.getFullFileUrl(event.getPic()),
-                event.getEventStatus() != null ? event.getEventStatus().toString() : null
+                event.getEventStatus()
         );
     }
-} 
+}

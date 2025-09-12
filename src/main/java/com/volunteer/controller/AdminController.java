@@ -2,7 +2,7 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.auth.MessageResponse;
 import com.volunteer.dto.request.RequestResponse;
-import com.volunteer.dto.volunteer.VolunteerResponse;
+import com.volunteer.dto.volunteer.*;
 import com.volunteer.entity.Account;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.Request;
@@ -16,6 +16,10 @@ import com.volunteer.service.VolunteerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
@@ -25,6 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
@@ -52,7 +57,7 @@ public class AdminController {
 
     // Activate/deactivate a volunteer account
     @PutMapping("/accounts/{id}/status")
-    public ResponseEntity<MessageResponse> updateAccountStatus(@PathVariable Long id, @RequestParam boolean active) {
+    public ResponseEntity<MessageResponse> updateAccountStatus(@PathVariable("id") Long id, @RequestParam boolean active) {
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Volunteer not found"));
         Account account = volunteer.getAccount();
@@ -68,14 +73,14 @@ public class AdminController {
 
     // Activate/deactivate user account
     @PutMapping("/accounts/{userId}/status")
-    public ResponseEntity<?> manageUserAccountStatus(@PathVariable Long userId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageUserAccountStatus(@PathVariable("userId") Long userId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement user account status management
         return ResponseEntity.ok("User account " + userId + " status updated");
     }
 
     // Upgrade user account to Admin role
     @PutMapping("/accounts/{userId}/role")
-    public ResponseEntity<?> upgradeUserToAdmin(@PathVariable Long userId, @RequestBody Object roleUpdateRequest) {
+    public ResponseEntity<?> upgradeUserToAdmin(@PathVariable("userId") Long userId, @RequestBody Object roleUpdateRequest) {
         // TODO: Implement role upgrade logic
         return ResponseEntity.ok("User " + userId + " upgraded to Admin role");
     }
@@ -91,27 +96,27 @@ public class AdminController {
 
         List<RequestResponse> response = requests.stream()
                 .map(req -> new RequestResponse(
-                        req.getId(),
-                        req.getOrganization().getOrganizationName(),
-                        req.getVolunteer().getFullName(),
-                        req.getVolunteer().getAccount().getEmail(),
-                        req.getVolunteer().getContact(),
-                        req.getOrganization().getDescription(),
-                        req.getDenyReason(),
-                        req.getOrganization().getLogo(),
-                        req.getOrganization().getCertificate(),
-                        req.getRequestType(),
-                        req.getVolunteer().getId(),
-                        req.getStatus(),
-                        req.getUpdatedAt()
-                ))
+                req.getId(),
+                req.getOrganization().getOrganizationName(),
+                req.getVolunteer().getFullName(),
+                req.getVolunteer().getAccount().getEmail(),
+                req.getVolunteer().getContact(),
+                req.getOrganization().getDescription(),
+                req.getDenyReason(),
+                req.getOrganization().getLogo(),
+                req.getOrganization().getCertificate(),
+                req.getRequestType(),
+                req.getVolunteer().getId(),
+                req.getStatus(),
+                req.getUpdatedAt()
+        ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
 
     // Approve/reject an organization upgrade request
     @PostMapping("/organization-upgrade-requests/{requestId}/decision")
-    public ResponseEntity<MessageResponse> decideUpgradeRequest(@PathVariable Long requestId, @RequestParam boolean approve, @RequestParam(required = false) String reason) {
+    public ResponseEntity<MessageResponse> decideUpgradeRequest(@PathVariable("requestId") Long requestId, @RequestParam boolean approve, @RequestParam(required = false) String reason) {
         if (approve) {
             requestService.approveRequest(requestId);
             return ResponseEntity.ok(new MessageResponse("Request approved"));
@@ -123,14 +128,14 @@ public class AdminController {
 
     // Approve/reject organization upgrade request
     @PutMapping("/organization-upgrade-requests/{requestId}/decision")
-    public ResponseEntity<?> manageOrganizationUpgradeRequest(@PathVariable Long requestId, @RequestBody Object decisionRequest) {
+    public ResponseEntity<?> manageOrganizationUpgradeRequest(@PathVariable("requestId") Long requestId, @RequestBody Object decisionRequest) {
         // TODO: Implement organization upgrade request decision logic
         return ResponseEntity.ok("Organization upgrade request " + requestId + " decision updated");
     }
 
     // Approve/reject organization
     @PutMapping("/organizations/{orgId}/status")
-    public ResponseEntity<?> manageOrganizationStatus(@PathVariable Long orgId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageOrganizationStatus(@PathVariable("orgId") Long orgId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement organization status management
         return ResponseEntity.ok("Organization " + orgId + " status updated");
     }
@@ -151,7 +156,7 @@ public class AdminController {
 
     // Approve/reject event
     @PutMapping("/events/{eventId}/status")
-    public ResponseEntity<?> manageEventStatus(@PathVariable Long eventId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageEventStatus(@PathVariable("eventId") Long eventId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement event status management
         return ResponseEntity.ok("Event " + eventId + " status updated");
     }
@@ -165,14 +170,14 @@ public class AdminController {
 
     // Approve/reject request
     @PutMapping("/requests/{requestId}/decision")
-    public ResponseEntity<?> manageRequestDecision(@PathVariable Long requestId, @RequestBody Object decisionRequest) {
+    public ResponseEntity<?> manageRequestDecision(@PathVariable("requestId") Long requestId, @RequestBody Object decisionRequest) {
         // TODO: Implement request decision logic
         return ResponseEntity.ok("Request " + requestId + " decision updated");
     }
 
     // View user profile
     @GetMapping("/accounts/{userId}")
-    public ResponseEntity<?> getUserProfile(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserProfile(@PathVariable("userId") Long userId) {
         // TODO: Return user profile
         return ResponseEntity.ok("User profile for user " + userId);
     }
@@ -190,25 +195,16 @@ public class AdminController {
 //        // TODO: Return all organization upgrade requests
 //        return ResponseEntity.ok(List.of());
 //    }
-
     // View all user accounts
 //    @GetMapping("/accounts")
 //    public ResponseEntity<List<?>> getAllUserAccounts() {
 //        // TODO: Return all user accounts
 //        return ResponseEntity.ok(List.of());
 //    }
-
     // View all admin users
     @GetMapping("/admins")
     public ResponseEntity<List<?>> getAllAdmins() {
         // TODO: Return all admin users
-        return ResponseEntity.ok(List.of());
-    }
-
-    // View all volunteers
-    @GetMapping("/volunteers")
-    public ResponseEntity<List<?>> getAllVolunteers() {
-        // TODO: Return all volunteers
         return ResponseEntity.ok(List.of());
     }
 
@@ -358,4 +354,116 @@ public class AdminController {
         // TODO: Return all charity types
         return ResponseEntity.ok(List.of());
     }
-} 
+
+    // ========== VOLUNTEER MANAGEMENT APIs ==========
+    /**
+     * Get all volunteers with search (no pagination) GET
+     * /api/admin/volunteers?search=keyword
+     */
+    @GetMapping("/volunteers")
+    public ResponseEntity<List<VolunteerListResponse>> getAllVolunteers(
+            @RequestParam(value = "search", required = false) String search) {
+
+        logger.info("Getting all volunteers with search: {}", search);
+
+        List<VolunteerListResponse> volunteers = volunteerService.getAllVolunteers(search);
+        return ResponseEntity.ok(volunteers);
+    }
+
+    /**
+     * Get volunteer detail by ID GET /api/admin/volunteers/{id}
+     */
+    @GetMapping("/volunteers/{id}")
+    public ResponseEntity<VolunteerDetailResponse> getVolunteerDetail(@PathVariable("id") Long id) {
+        logger.info("Getting volunteer detail for id: {}", id);
+
+        VolunteerDetailResponse volunteer = volunteerService.getVolunteerDetail(id);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Create new volunteer POST /api/admin/volunteers
+     */
+    @PostMapping("/volunteers")
+    public ResponseEntity<VolunteerListResponse> createVolunteer(@RequestBody VolunteerCreateRequest request) {
+        logger.info("Creating new volunteer: {}", request.getEmail());
+
+        VolunteerListResponse volunteer = volunteerService.createVolunteerByAdmin(request);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Update volunteer PUT /api/admin/volunteers/{id}
+     */
+    @PutMapping("/volunteers/{id}")
+    public ResponseEntity<VolunteerListResponse> updateVolunteer(
+            @PathVariable("id") Long id,
+            @RequestBody VolunteerUpdateRequest request) {
+        logger.info("Updating volunteer id: {}", id);
+
+        VolunteerListResponse volunteer = volunteerService.updateVolunteerByAdmin(id, request);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Soft delete volunteer DELETE /api/admin/volunteers/{id}
+     */
+    @DeleteMapping("/volunteers/{id}")
+    public ResponseEntity<MessageResponse> deleteVolunteer(@PathVariable("id") Long id) {
+        logger.info("Soft deleting volunteer id: {}", id);
+
+        volunteerService.softDeleteVolunteerByAdmin(id);
+        return ResponseEntity.ok(new MessageResponse("Volunteer deleted successfully"));
+    }
+
+    /**
+     * Ban/Unban volunteer PUT /api/admin/volunteers/{id}/ban
+     */
+    @PutMapping("/volunteers/{id}/ban")
+    public ResponseEntity<MessageResponse> banVolunteer(
+            @PathVariable("id") Long id,
+            @RequestParam boolean banned) {
+        logger.info("Setting ban status for volunteer id: {} to {}", id, banned);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setIsBanned(banned);
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        String message = banned ? "Volunteer banned successfully" : "Volunteer unbanned successfully";
+        return ResponseEntity.ok(new MessageResponse(message));
+    }
+
+    /**
+     * Activate/Deactivate volunteer account PUT
+     * /api/admin/volunteers/{id}/status
+     */
+    @PutMapping("/volunteers/{id}/status")
+    public ResponseEntity<MessageResponse> updateVolunteerStatus(
+            @PathVariable("id") Long id,
+            @RequestParam boolean active) {
+        logger.info("Setting active status for volunteer id: {} to {}", id, active);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setIsActive(active);
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        String message = active ? "Volunteer activated successfully" : "Volunteer deactivated successfully";
+        return ResponseEntity.ok(new MessageResponse(message));
+    }
+
+    /**
+     * Change volunteer role PUT /api/admin/volunteers/{id}/role
+     */
+    @PutMapping("/volunteers/{id}/role")
+    public ResponseEntity<MessageResponse> updateVolunteerRole(
+            @PathVariable("id") Long id,
+            @RequestParam String role) {
+        logger.info("Changing role for volunteer id: {} to {}", id, role);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setRole(com.volunteer.enums.Role.valueOf(role));
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        return ResponseEntity.ok(new MessageResponse("Volunteer role updated successfully"));
+    }
+}
