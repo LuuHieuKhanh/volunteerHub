@@ -39,6 +39,24 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/charity/{eventId}/join")
+    public ResponseEntity<String> joinProgram(
+            @PathVariable("eventId") Long eventId,
+            @RequestParam(value = "volunteerId") Long volunteerId // nếu có JWT thì lấy từ token thay vì request param
+    ) {
+        charityEventService.joinProgram(eventId, volunteerId);
+        return ResponseEntity.ok("Joined successfully");
+    }
+
+    @PostMapping("/charity/{eventId}/leave")
+    public ResponseEntity<String> leaveProgram(
+            @PathVariable("eventId") Long eventId,
+            @RequestParam(value = "volunteerId") Long volunteerId // nếu có JWT thì lấy từ token thay vì request param
+    ) {
+        charityEventService.leaveProgram(eventId, volunteerId);
+        return ResponseEntity.ok("Leaved successfully");
+    }
+
     @GetMapping("/charity/{organizationId}/organization")
     public ResponseEntity<List<CharityEventResponse>> getCharitiesByOrganization(
             @PathVariable("organizationId") Long organizationId,
@@ -52,10 +70,12 @@ public class EventController {
     }
 
     @GetMapping("/charity/{id}")
-    public ResponseEntity<CharityEventResponse> getCharityEventById(@PathVariable Long id) {
-        logger.info("Get charity event by id endpoint called for id: {}", id);
-        CharityEventResponse response = charityEventService.getCharityEventById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CharityEventResponseList> getCharityById(
+            @PathVariable("id") Long charityId,
+            @RequestParam(value = "volunteerId", required = false) Long volunteerId
+    ) {
+        CharityEventResponseList result = charityEventService.getCharityById(charityId, volunteerId);
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/charity/{id}")
