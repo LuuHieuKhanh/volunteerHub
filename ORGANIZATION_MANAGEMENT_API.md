@@ -206,6 +206,24 @@ Get detailed information about a specific organization including statistics and 
       "createdAt": "2024-01-20T10:00:00",
       "updatedAt": "2024-01-20T10:00:00"
     }
+  ],
+  "activeVolunteers": [
+    {
+      "id": 1,
+      "fullName": "Alice Johnson",
+      "contact": "+84123456789",
+      "email": "alice@example.com",
+      "isActive": true,
+      "isBanned": false
+    },
+    {
+      "id": 2,
+      "fullName": "Bob Smith",
+      "contact": "+84987654321",
+      "email": "bob@example.com",
+      "isActive": true,
+      "isBanned": false
+    }
   ]
 }
 ```
@@ -409,6 +427,12 @@ The detail API provides comprehensive statistics:
 
 - **Charity Events**: List of all charity events with volunteer participation counts
 - **Donation Events**: List of all donation events with actual donation amounts
+
+### Active Volunteers
+
+- **Active Volunteers**: List of all volunteers with active accounts in the system
+- Includes volunteer ID, full name, contact information, email, and status
+- Only volunteers with `isActive = true` are included
 
 ---
 

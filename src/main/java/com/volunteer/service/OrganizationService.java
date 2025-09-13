@@ -232,6 +232,24 @@ public class OrganizationService {
                 .collect(Collectors.toList());
         response.setDonationEvents(donationEventResponses);
 
+        // Get active volunteers
+        List<Volunteer> activeVolunteers = volunteerRepository.findByAccount_IsActive(true);
+        List<VolunteerActiveResponse> activeVolunteerResponses = activeVolunteers.stream()
+                .map(volunteer -> {
+                    VolunteerActiveResponse volunteerResponse = new VolunteerActiveResponse();
+                    volunteerResponse.setId(volunteer.getId());
+                    volunteerResponse.setFullName(volunteer.getFullName());
+                    volunteerResponse.setContact(volunteer.getContact());
+                    volunteerResponse.setBanned(volunteer.isBanned());
+                    if (volunteer.getAccount() != null) {
+                        volunteerResponse.setEmail(volunteer.getAccount().getEmail());
+                        volunteerResponse.setActive(volunteer.getAccount().isActive());
+                    }
+                    return volunteerResponse;
+                })
+                .collect(Collectors.toList());
+        response.setActiveVolunteers(activeVolunteerResponses);
+
         return response;
     }
 

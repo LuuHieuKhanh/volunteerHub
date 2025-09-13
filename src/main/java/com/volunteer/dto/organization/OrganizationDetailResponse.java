@@ -54,4 +54,7 @@ public class OrganizationDetailResponse {
     private List<CharityEventResponse> charityEvents;
 
     private List<DonationEventResponse> donationEvents;
+
+    // Active volunteers
+    private List<VolunteerActiveResponse> activeVolunteers;
 }
