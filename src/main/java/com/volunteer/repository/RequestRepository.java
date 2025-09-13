@@ -1,6 +1,7 @@
 package com.volunteer.repository;
 
 import com.volunteer.entity.Request;
+import com.volunteer.entity.Organization;
 import com.volunteer.enums.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,13 +12,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
+
     List<Request> findByVolunteer_Id(Long volunteerId);
 
     Optional<Request> findByVolunteer_IdAndStatusIn(Long volunteerId, Collection<RequestStatus> statuses);
+
     List<Request> findByStatus(RequestStatus status);
-    @Query("SELECT r FROM Request r " +
-            "LEFT JOIN FETCH r.volunteer " +
-            "LEFT JOIN FETCH r.organization " +
-            "WHERE r.volunteer.id = :volunteerId")
+
+    boolean existsByOrganizationAndStatus(Organization organization, RequestStatus status);
+
+    @Query("SELECT r FROM Request r "
+            + "LEFT JOIN FETCH r.volunteer "
+            + "LEFT JOIN FETCH r.organization "
+            + "WHERE r.volunteer.id = :volunteerId")
     List<Request> findAllByVolunteerIdWithDetails(@Param("volunteerId") Long volunteerId);
-} 
+}

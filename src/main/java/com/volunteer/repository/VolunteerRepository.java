@@ -14,6 +14,8 @@ public interface VolunteerRepository extends JpaRepository<Volunteer, Long> {
 
     Optional<Volunteer> findByAccount_EmailAndAccount_IsActive(String accountEmail, boolean accountActive);
 
+    Optional<Volunteer> findByAccount_Email(String accountEmail);
+
     List<Volunteer> findByAccount_Role(Role role);
 
     List<Volunteer> findByAccount_IsActive(boolean active);

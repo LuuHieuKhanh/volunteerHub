@@ -3,6 +3,7 @@ package com.volunteer.controller;
 import com.volunteer.dto.auth.MessageResponse;
 import com.volunteer.dto.request.RequestResponse;
 import com.volunteer.dto.volunteer.*;
+import com.volunteer.dto.organization.*;
 import com.volunteer.entity.Account;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.Request;
@@ -13,6 +14,7 @@ import com.volunteer.repository.RequestRepository;
 import com.volunteer.repository.VolunteerRepository;
 import com.volunteer.service.RequestService;
 import com.volunteer.service.VolunteerService;
+import com.volunteer.service.OrganizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,6 +38,8 @@ public class AdminController {
 
     @Autowired
     private VolunteerService volunteerService;
+    @Autowired
+    private OrganizationService organizationService;
     @Autowired
     private VolunteerRepository volunteerRepository;
     @Autowired
@@ -140,13 +146,12 @@ public class AdminController {
         return ResponseEntity.ok("Organization " + orgId + " status updated");
     }
 
-    // View all organizations
-    @GetMapping("/organizations")
-    public ResponseEntity<List<?>> getAllOrganizations() {
-        // TODO: Return all organizations
-        return ResponseEntity.ok(List.of());
-    }
-
+    // This endpoint is replaced by the one below with search functionality
+    // @GetMapping("/organizations")
+    // public ResponseEntity<List<?>> getAllOrganizations() {
+    //     // TODO: Return all organizations
+    //     return ResponseEntity.ok(List.of());
+    // }
     // View all events (charity and donation)
     @GetMapping("/events")
     public ResponseEntity<List<?>> getAllEvents() {
@@ -465,5 +470,67 @@ public class AdminController {
         volunteerService.updateVolunteerByAdmin(id, request);
 
         return ResponseEntity.ok(new MessageResponse("Volunteer role updated successfully"));
+    }
+
+    // ==================== ORGANIZATION MANAGEMENT APIs ====================
+    /**
+     * Get all organizations with search (no pagination) GET
+     * /api/admin/organizations?search=keyword
+     */
+    @GetMapping("/organizations")
+    public ResponseEntity<List<OrganizationListResponse>> getAllOrganizations(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all organizations with search: {}", search);
+        List<OrganizationListResponse> organizations = organizationService.getAllOrganizations(search);
+        return ResponseEntity.ok(organizations);
+    }
+
+    /**
+     * Get organization detail by ID GET /api/admin/organizations/{id}
+     */
+    @GetMapping("/organizations/{id}")
+    public ResponseEntity<OrganizationDetailResponse> getOrganizationDetail(@PathVariable("id") Long id) {
+        logger.info("Getting organization detail for id: {}", id);
+        OrganizationDetailResponse organization = organizationService.getOrganizationDetail(id);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Create organization POST /api/admin/organizations
+     */
+    @PostMapping("/organizations")
+    public ResponseEntity<OrganizationListResponse> createOrganization(
+            @RequestBody OrganizationCreateRequest request) {
+        logger.info("Creating organization: {}", request.getOrganizationName());
+
+        // Check if current user is admin
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        OrganizationListResponse organization = organizationService.createOrganizationByAdmin(request, isAdmin);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Update organization PUT /api/admin/organizations/{id}
+     */
+    @PutMapping("/organizations/{id}")
+    public ResponseEntity<OrganizationListResponse> updateOrganization(
+            @PathVariable("id") Long id,
+            @RequestBody OrganizationUpdateRequest request) {
+        logger.info("Updating organization id: {}", id);
+        OrganizationListResponse organization = organizationService.updateOrganizationByAdmin(id, request);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Soft delete organization DELETE /api/admin/organizations/{id}
+     */
+    @DeleteMapping("/organizations/{id}")
+    public ResponseEntity<MessageResponse> deleteOrganization(@PathVariable("id") Long id) {
+        logger.info("Soft deleting organization id: {}", id);
+        organizationService.softDeleteOrganizationByAdmin(id);
+        return ResponseEntity.ok(new MessageResponse("Organization deleted successfully"));
     }
 }
