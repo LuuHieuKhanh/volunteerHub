@@ -26,4 +26,8 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             + "LEFT JOIN FETCH r.organization "
             + "WHERE r.volunteer.id = :volunteerId")
     List<Request> findAllByVolunteerIdWithDetails(@Param("volunteerId") Long volunteerId);
+
+    List<Request> findByOrganization_OrganizationNameContainingIgnoreCase(String organizationName);
+
+    Long countByStatus(RequestStatus status);
 }

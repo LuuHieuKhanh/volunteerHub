@@ -2,6 +2,7 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.auth.MessageResponse;
 import com.volunteer.dto.request.RequestResponse;
+import com.volunteer.dto.request.RequestStatusUpdateRequest;
 import com.volunteer.dto.volunteer.*;
 import com.volunteer.dto.organization.*;
 import com.volunteer.entity.Account;
@@ -15,6 +16,7 @@ import com.volunteer.repository.VolunteerRepository;
 import com.volunteer.service.RequestService;
 import com.volunteer.service.VolunteerService;
 import com.volunteer.service.OrganizationService;
+import com.volunteer.service.AdminDashboardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,8 @@ public class AdminController {
     private RequestService requestService;
     @Autowired
     private OrganizationRepository organizationRepository;
+    @Autowired
+    private AdminDashboardService adminDashboardService;
 
     // Get all volunteers (accounts)
     @GetMapping("/accounts")
@@ -123,13 +127,18 @@ public class AdminController {
     // Approve/reject an organization upgrade request
     @PostMapping("/organization-upgrade-requests/{requestId}/decision")
     public ResponseEntity<MessageResponse> decideUpgradeRequest(@PathVariable("requestId") Long requestId, @RequestParam boolean approve, @RequestParam(required = false) String reason) {
+        RequestStatusUpdateRequest statusRequest = new RequestStatusUpdateRequest();
+
         if (approve) {
-            requestService.approveRequest(requestId);
-            return ResponseEntity.ok(new MessageResponse("Request approved"));
+            statusRequest.setStatus(com.volunteer.enums.RequestStatus.APPROVED);
+            statusRequest.setDenyReason(null);
         } else {
-            requestService.rejectRequest(requestId, reason != null ? reason : "Rejected by admin");
-            return ResponseEntity.ok(new MessageResponse("Request rejected"));
+            statusRequest.setStatus(com.volunteer.enums.RequestStatus.REJECTED);
+            statusRequest.setDenyReason(reason != null ? reason : "Rejected by admin");
         }
+
+        com.volunteer.dto.request.MessageResponse response = requestService.updateRequestStatus(requestId, statusRequest);
+        return ResponseEntity.ok(new MessageResponse(response.getMessage()));
     }
 
     // Approve/reject organization upgrade request
@@ -166,18 +175,40 @@ public class AdminController {
         return ResponseEntity.ok("Event " + eventId + " status updated");
     }
 
-    // View all requests
+    // ==================== REQUEST MANAGEMENT APIs ====================
+    /**
+     * Get all requests with search (no pagination) GET
+     * /api/admin/requests?search=keyword
+     */
     @GetMapping("/requests")
-    public ResponseEntity<List<?>> getAllRequests() {
-        // TODO: Return all requests
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.request.RequestListResponse>> getAllRequests(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all requests with search: {}", search);
+        List<com.volunteer.dto.request.RequestListResponse> requests = requestService.getAllRequests(search);
+        return ResponseEntity.ok(requests);
     }
 
-    // Approve/reject request
-    @PutMapping("/requests/{requestId}/decision")
-    public ResponseEntity<?> manageRequestDecision(@PathVariable("requestId") Long requestId, @RequestBody Object decisionRequest) {
-        // TODO: Implement request decision logic
-        return ResponseEntity.ok("Request " + requestId + " decision updated");
+    /**
+     * Get request detail by ID GET /api/admin/requests/{id}
+     */
+    @GetMapping("/requests/{id}")
+    public ResponseEntity<com.volunteer.dto.request.RequestDetailResponse> getRequestDetail(@PathVariable("id") Long id) {
+        logger.info("Getting request detail for id: {}", id);
+        com.volunteer.dto.request.RequestDetailResponse request = requestService.getRequestDetail(id);
+        return ResponseEntity.ok(request);
+    }
+
+    /**
+     * Update request status (approve/reject) PUT
+     * /api/admin/requests/{id}/status
+     */
+    @PutMapping("/requests/{id}/status")
+    public ResponseEntity<MessageResponse> updateRequestStatus(
+            @PathVariable("id") Long id,
+            @RequestBody RequestStatusUpdateRequest request) {
+        logger.info("Updating request status for id: {}", id);
+        com.volunteer.dto.request.MessageResponse response = requestService.updateRequestStatus(id, request);
+        return ResponseEntity.ok(new MessageResponse(response.getMessage()));
     }
 
     // View user profile
@@ -185,6 +216,17 @@ public class AdminController {
     public ResponseEntity<?> getUserProfile(@PathVariable("userId") Long userId) {
         // TODO: Return user profile
         return ResponseEntity.ok("User profile for user " + userId);
+    }
+
+    // ==================== ADMIN DASHBOARD API ====================
+    /**
+     * Get admin dashboard data GET /api/admin/dashboard
+     */
+    @GetMapping("/dashboard")
+    public ResponseEntity<com.volunteer.dto.admin.AdminDashboardResponse> getDashboard() {
+        logger.info("Getting admin dashboard data");
+        com.volunteer.dto.admin.AdminDashboardResponse dashboard = adminDashboardService.getDashboardData();
+        return ResponseEntity.ok(dashboard);
     }
 
     // Get system statistics
