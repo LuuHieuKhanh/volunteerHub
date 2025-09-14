@@ -56,7 +56,7 @@ public class CharityEvent extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 50)
-    private EEventStatus eventStatus = EEventStatus.upcoming;
+    private EEventStatus eventStatus = EEventStatus.UPCOMING;
 
     @OneToMany(mappedBy = "charityEvent")
     private List<VolunteerCharityEvent> participants;

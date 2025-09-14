@@ -16,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
+
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
     @Autowired
@@ -63,7 +64,7 @@ public class EventController {
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "from", required = false) String from,
             @RequestParam(value = "to", required = false) String to
-            ) {
+    ) {
         return ResponseEntity.ok(
                 charityEventService.getCharitiesByOrganization(organizationId, name, from, to)
         );
@@ -93,32 +94,47 @@ public class EventController {
     }
 
     // Donation Event Endpoints
+    @GetMapping("/donation")
+    public ResponseEntity<List<com.volunteer.dto.donation.DonationEventListResponse>> getAllDonationEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Get all donation events endpoint called with search: {}", search);
+        List<com.volunteer.dto.donation.DonationEventListResponse> response = donationEventService.getAllDonationEvents(search);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/donation")
-    public ResponseEntity<DonationEventResponse> createDonationEvent(@Valid @RequestBody DonationEventRequest request) {
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> createDonationEvent(@Valid @RequestBody com.volunteer.dto.donation.DonationEventCreateRequest request) {
         logger.info("Create donation event endpoint called for title: {}", request.getTitle());
-        DonationEventResponse response = donationEventService.createDonationEvent(request);
+        com.volunteer.dto.donation.DonationEventListResponse response = donationEventService.createDonationEvent(request);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/donation/{id}")
-    public ResponseEntity<DonationEventResponse> getDonationEventById(@PathVariable Long id) {
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventDetailResponse> getDonationEventById(@PathVariable Long id) {
         logger.info("Get donation event by id endpoint called for id: {}", id);
-        DonationEventResponse response = donationEventService.getDonationEventById(id);
+        com.volunteer.dto.donation.DonationEventDetailResponse response = donationEventService.getDonationEventDetail(id);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/donation/{id}")
-    public ResponseEntity<DonationEventResponse> updateDonationEvent(@PathVariable Long id, @Valid @RequestBody DonationEventRequest request) {
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEvent(@PathVariable Long id, @Valid @RequestBody com.volunteer.dto.donation.DonationEventUpdateRequest request) {
         logger.info("Update donation event endpoint called for id: {}", id);
-        DonationEventResponse response = donationEventService.updateDonationEvent(id, request);
+        com.volunteer.dto.donation.DonationEventListResponse response = donationEventService.updateDonationEvent(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/donation/{id}")
     public ResponseEntity<Void> deleteDonationEvent(@PathVariable Long id) {
         logger.info("Delete donation event endpoint called for id: {}", id);
-        donationEventService.deleteDonationEvent(id);
+        donationEventService.softDeleteDonationEvent(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/donation/volunteer/{volunteerId}/history")
+    public ResponseEntity<List<com.volunteer.dto.donation.VolunteerDonationHistoryResponse>> getVolunteerDonationHistory(@PathVariable("volunteerId") Long volunteerId) {
+        logger.info("Get volunteer donation history endpoint called for volunteer id: {}", volunteerId);
+        List<com.volunteer.dto.donation.VolunteerDonationHistoryResponse> response = donationEventService.getVolunteerDonationHistory(volunteerId);
+        return ResponseEntity.ok(response);
     }
 
     // General event listing for users
@@ -134,4 +150,4 @@ public class EventController {
         // TODO: Return event details
         return ResponseEntity.ok("Event details for event " + eventId);
     }
-} 
+}

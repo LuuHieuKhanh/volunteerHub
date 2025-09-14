@@ -17,6 +17,7 @@ import com.volunteer.service.RequestService;
 import com.volunteer.service.VolunteerService;
 import com.volunteer.service.OrganizationService;
 import com.volunteer.service.AdminDashboardService;
+import com.volunteer.service.DonationEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,8 @@ public class AdminController {
     private OrganizationRepository organizationRepository;
     @Autowired
     private AdminDashboardService adminDashboardService;
+    @Autowired
+    private DonationEventService donationEventService;
 
     // Get all volunteers (accounts)
     @GetMapping("/accounts")
@@ -266,13 +269,6 @@ public class AdminController {
     @GetMapping("/charity-events")
     public ResponseEntity<List<?>> getAllCharityEvents() {
         // TODO: Return all charity events
-        return ResponseEntity.ok(List.of());
-    }
-
-    // View all donation events
-    @GetMapping("/donation-events")
-    public ResponseEntity<List<?>> getAllDonationEvents() {
-        // TODO: Return all donation events
         return ResponseEntity.ok(List.of());
     }
 
@@ -574,5 +570,73 @@ public class AdminController {
         logger.info("Soft deleting organization id: {}", id);
         organizationService.softDeleteOrganizationByAdmin(id);
         return ResponseEntity.ok(new MessageResponse("Organization deleted successfully"));
+    }
+
+    // ==================== DONATION EVENT MANAGEMENT APIs ====================
+    /**
+     * Get all donation events (no pagination) GET
+     * /api/admin/donation-events?search=keyword
+     */
+    @GetMapping("/donation-events")
+    public ResponseEntity<List<com.volunteer.dto.donation.DonationEventListResponse>> getAllDonationEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all donation events with search: {}", search);
+        List<com.volunteer.dto.donation.DonationEventListResponse> events = donationEventService.getAllDonationEvents(search);
+        return ResponseEntity.ok(events);
+    }
+
+    /**
+     * Get donation event detail by ID GET /api/admin/donation-events/{id}
+     */
+    @GetMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventDetailResponse> getDonationEventDetail(@PathVariable("id") Long id) {
+        logger.info("Getting donation event detail for id: {}", id);
+        com.volunteer.dto.donation.DonationEventDetailResponse event = donationEventService.getDonationEventDetail(id);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Create donation event POST /api/admin/donation-events
+     */
+    @PostMapping("/donation-events")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> createDonationEvent(
+            @RequestBody com.volunteer.dto.donation.DonationEventCreateRequest request) {
+        logger.info("Creating donation event: {}", request.getTitle());
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.createDonationEvent(request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Update donation event PUT /api/admin/donation-events/{id}
+     */
+    @PutMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEvent(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventUpdateRequest request) {
+        logger.info("Updating donation event id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEvent(id, request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Soft delete donation event DELETE /api/admin/donation-events/{id}
+     */
+    @DeleteMapping("/donation-events/{id}")
+    public ResponseEntity<MessageResponse> deleteDonationEvent(@PathVariable("id") Long id) {
+        logger.info("Soft deleting donation event id: {}", id);
+        donationEventService.softDeleteDonationEvent(id);
+        return ResponseEntity.ok(new MessageResponse("Donation event deleted successfully"));
+    }
+
+    /**
+     * Update donation event status PUT /api/admin/donation-events/{id}/status
+     */
+    @PutMapping("/donation-events/{id}/status")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEventStatus(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventStatusUpdateRequest request) {
+        logger.info("Updating donation event status for id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEventStatus(id, request);
+        return ResponseEntity.ok(event);
     }
 }
