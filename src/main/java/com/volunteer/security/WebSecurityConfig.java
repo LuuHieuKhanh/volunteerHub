@@ -79,7 +79,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                         "/v3/api-docs/**",
                         "/uploads/**"
                 ).permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+//                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
                 )
                 .formLogin(formLogin -> formLogin.failureHandler(failureHandler));

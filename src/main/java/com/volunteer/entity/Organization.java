@@ -3,6 +3,9 @@ package com.volunteer.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "organizations")
 @Data
@@ -30,4 +33,6 @@ public class Organization extends BaseEntity {
     @Column(name = "logo_pic", columnDefinition = "NVARCHAR(MAX)")
     private String logo = "";
 
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followers = new ArrayList<>();
 } 

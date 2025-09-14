@@ -27,4 +27,5 @@ public interface VolunteerCharityEventRepository extends JpaRepository<Volunteer
 
     Optional<VolunteerCharityEvent> findByVolunteerIdAndCharityEventId(Long volunteerId, Long eventId);
 
+    long countByVolunteerId(Long volunteerId);
 }

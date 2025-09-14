@@ -79,13 +79,13 @@ public class RequestService {
         existingRequest.setStatus(request.getStatus());
 
         if (request.getStatus() == RequestStatus.REJECTED) {
-            if (request.getDenyReason() == null || request.getDenyReason().trim().isEmpty()) {
-                throw new IllegalArgumentException("Deny reason is required when rejecting a request");
-            }
-            existingRequest.setDenyReason(request.getDenyReason());
+//            if (request.getDenyReason() == null || request.getDenyReason().trim().isEmpty()) {
+//                throw new IllegalArgumentException("Deny reason is required when rejecting a request");
+//            }
+//            existingRequest.setDenyReason(request.getDenyReason());
         } else if (request.getStatus() == RequestStatus.APPROVED) {
             // Clear deny reason when approving
-            existingRequest.setDenyReason(null);
+//            existingRequest.setDenyReason(null);
 
             // If this is an organization registration request, update volunteer role
             if (existingRequest.getRequestType().name().equals("ORGANIZATION_REGISTRATION")) {

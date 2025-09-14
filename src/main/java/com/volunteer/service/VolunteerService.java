@@ -20,11 +20,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +43,9 @@ public class VolunteerService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LocalStorageService localStorageService;
 
     public VolunteerResponse createVolunteer(Volunteer volunteer) {
         Volunteer saved = volunteerRepository.save(volunteer);
@@ -72,6 +78,33 @@ public class VolunteerService {
         return toResponse(saved);
     }
 
+    public Volunteer updateVolunteerUser(Long id, VolunteerUpdateRequest request, MultipartFile pic) throws IOException {
+        Volunteer volunteer = volunteerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Volunteer not found"));
+
+        Account account = volunteer.getAccount();
+
+        // update account fields
+        if (request.getEmail() != null) account.setEmail(request.getEmail());
+        if (request.getPassword() != null) account.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (request.getRole() != null) account.setRole(request.getRole());
+        if (request.getIsActive() != null) account.setActive(request.getIsActive());
+
+        // update volunteer fields
+        if (request.getFullName() != null) volunteer.setFullName(request.getFullName());
+        if (request.getContact() != null) volunteer.setContact(request.getContact());
+        if (request.getIsBanned() != null) volunteer.setBanned(request.getIsBanned());
+
+        // 👇 update ảnh (dựa vào localStorageService giống code bạn đưa)
+        if (pic != null && !pic.isEmpty()) {
+            String picPath = localStorageService.uploadFile(pic);
+            volunteer.setPic(picPath);
+        }
+
+        accountRepository.save(account);
+        return volunteerRepository.save(volunteer);
+    }
+
     @Transactional
     public void softDeleteCurrentUserAccount(Long id) {
         logger.info("Soft delete current user account id: {}", id);
@@ -95,7 +128,7 @@ public class VolunteerService {
                 volunteer.getId(),
                 volunteer.getFullName(),
                 volunteer.getAccount() != null ? volunteer.getAccount().getEmail() : null,
-                volunteer.getPic(),
+                localStorageService.getFullFileUrl(volunteer.getPic()),
                 volunteer.getContact(),
                 volunteer.getAccount() != null ? volunteer.getAccount().getId() : null,
                 volunteer.getAccount() != null && volunteer.getAccount().isActive(),

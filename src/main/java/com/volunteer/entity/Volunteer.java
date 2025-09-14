@@ -3,6 +3,7 @@ package com.volunteer.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -40,4 +41,7 @@ public class Volunteer extends BaseEntity {
 
     @OneToOne(mappedBy = "volunteer", fetch = FetchType.LAZY)
     private Organization organization;
+
+    @OneToMany(mappedBy = "volunteer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> follows = new ArrayList<>();
 }
