@@ -3,6 +3,7 @@ package com.volunteer.service;
 import com.volunteer.dto.event.CharityEventRequest;
 import com.volunteer.dto.event.CharityEventResponse;
 import com.volunteer.dto.event.CharityEventResponseList;
+import com.volunteer.dto.event.VolunteerEventParticipationResponse;
 import com.volunteer.entity.CharityEvent;
 import com.volunteer.entity.Organization;
 import com.volunteer.entity.Volunteer;
@@ -124,6 +125,33 @@ public class CharityEventService {
         return events.stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public void checkinVolunteer(Long eventId, Long volunteerId) {
+        VolunteerCharityEvent vce = volunteerCharityEventRepository
+                .findByVolunteerIdAndCharityEventId(volunteerId, eventId)
+                .orElseThrow(() -> new RuntimeException("Volunteer chưa tham gia event này"));
+
+        vce.setCheckin(!vce.isCheckin());
+        volunteerCharityEventRepository.save(vce);
+    }
+
+    public List<VolunteerEventParticipationResponse> getVolunteersByCharity(Long charityId) {
+        List<VolunteerCharityEvent> joined = volunteerCharityEventRepository.findByCharityEventId(charityId);
+
+        return joined.stream().map(vce -> {
+            Volunteer v = vce.getVolunteer();
+            return VolunteerEventParticipationResponse.builder()
+                    .id(v.getId())
+                    .fullName(v.getFullName())
+                    .contact(v.getContact())
+                    .email(v.getAccount().getEmail())
+                    .joinStatus(vce.getJoinStatus())
+                    .joinDate(vce.getCreatedAt()) // 👈 lấy từ BaseEntity
+                    .checkin(vce.isCheckin())
+                    .build();
+        }).toList();
     }
 
     public CharityEventResponseList getCharityById(Long charityId, Long volunteerId) {

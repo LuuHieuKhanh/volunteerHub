@@ -4,6 +4,7 @@ import com.volunteer.enums.EEventStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -51,4 +52,10 @@ public class DonationEvent extends BaseEntity {
 
     @OneToMany(mappedBy = "donationEvent")
     private List<VolunteerDonation> donorList;
+
+    @Column(name = "date_start", nullable = false)
+    private LocalDateTime dateStart;
+
+    @Column(name = "date_end", nullable = false)
+    private LocalDateTime dateEnd;
 } 

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CharityEventRepository extends JpaRepository<CharityEvent, Long> {
+    long countByOrganizationId(Long organizationId);
     List<CharityEvent> findByOrganization_Id(Long organizationId);
 
     @Query("""

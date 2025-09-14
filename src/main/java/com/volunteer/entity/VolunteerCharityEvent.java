@@ -29,4 +29,7 @@ public class VolunteerCharityEvent extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "join_status", nullable = false, length = 50)
     private EJoinStatus joinStatus = EJoinStatus.REGISTERED;
+
+    @Column(name = "checkin", nullable = false, columnDefinition = "bit default 0")
+    private boolean checkin = false;
 }

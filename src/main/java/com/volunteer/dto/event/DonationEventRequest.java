@@ -1,10 +1,14 @@
 package com.volunteer.dto.event;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class DonationEventRequest {
@@ -21,7 +25,15 @@ public class DonationEventRequest {
     private BigDecimal moneyNeed;
 
     private String note;
-    private String qrPic;
+    private MultipartFile qrPic;   // ✅ upload file QR
+    private MultipartFile pic;
+
+    @NotNull
     private String bankAccount;
-    private String pic;
+
+    @NotNull
+    private LocalDateTime dateStart;
+
+    @NotNull
+    private LocalDateTime dateEnd;
 } 

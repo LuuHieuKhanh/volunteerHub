@@ -9,10 +9,16 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VolunteerCharityEventRepository extends JpaRepository<VolunteerCharityEvent, Long> {
+    long countByVolunteerId(Long volunteerId);
     Optional<VolunteerCharityEvent> findByVolunteerAndCharityEvent(Volunteer volunteer, CharityEvent charityEvent);
     List<VolunteerCharityEvent> findByVolunteer_IdAndJoinStatus(Long volunteerId, EJoinStatus joinStatus);
     List<VolunteerCharityEvent> findByCharityEvent_IdAndJoinStatus(Long charityEventId, EJoinStatus joinStatus);
     boolean existsByVolunteerIdAndCharityEventId(Long volunteerId, Long charityEventId);
 
     boolean existsByVolunteerAndCharityEvent(Volunteer volunteer, CharityEvent charityEvent);
+
+    List<VolunteerCharityEvent> findByCharityEventId(Long charityId);
+
+    Optional<VolunteerCharityEvent> findByVolunteerIdAndCharityEventId(Long volunteerId, Long eventId);
+
 }
