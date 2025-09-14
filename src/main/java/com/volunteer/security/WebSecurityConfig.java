@@ -28,6 +28,7 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig implements WebMvcConfigurer {
+
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
@@ -35,7 +36,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     private UserDetailsServiceImple userDetailsService;
 
     @Autowired
-    private UserDetailsServiceImple  userDetailsServiceImple;
+    private UserDetailsServiceImple userDetailsServiceImple;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -71,14 +72,15 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(
-                                "/api/auth/signin",
-                                "/api/auth/signup",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/uploads/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                .requestMatchers(
+                        "/api/auth/signin",
+                        "/api/auth/signup",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/uploads/**"
+                ).permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
                 )
                 .formLogin(formLogin -> formLogin.failureHandler(failureHandler));
 

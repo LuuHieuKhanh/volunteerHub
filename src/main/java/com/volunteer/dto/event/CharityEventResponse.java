@@ -1,10 +1,13 @@
 package com.volunteer.dto.event;
 
+import com.volunteer.enums.EEventStatus;
+import com.volunteer.enums.EJoinStatus;
 import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
 public class CharityEventResponse {
+
     private Long id;
     private String charityName;
     private Long organizationId;
@@ -16,11 +19,13 @@ public class CharityEventResponse {
     private Long numVolunteerActual;
     private String note;
     private String pic;
-    private String eventStatus;
+    private EEventStatus eventStatus;
+    private EJoinStatus joinStatus;
 
-    public CharityEventResponse() {}
+    public CharityEventResponse() {
+    }
 
-    public CharityEventResponse(Long id, String charityName, Long organizationId, String description, String destination, LocalDateTime dateStart, LocalDateTime dateEnd, Long numVolunteerRequire, Long numVolunteerActual, String note, String pic, String eventStatus) {
+    public CharityEventResponse(Long id, String charityName, Long organizationId, String description, String destination, LocalDateTime dateStart, LocalDateTime dateEnd, Long numVolunteerRequire, Long numVolunteerActual, String note, String pic, EEventStatus eventStatus) {
         this.id = id;
         this.charityName = charityName;
         this.organizationId = organizationId;
@@ -34,4 +39,4 @@ public class CharityEventResponse {
         this.pic = pic;
         this.eventStatus = eventStatus;
     }
-} 
+}

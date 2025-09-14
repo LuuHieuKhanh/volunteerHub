@@ -1,5 +1,4 @@
 package com.volunteer.repository;
-
 import com.volunteer.entity.VolunteerDonation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +12,7 @@ public interface VolunteerDonationRepository extends JpaRepository<VolunteerDona
     List<VolunteerDonation> findByVolunteerId(Long volunteerId);
     long countByVolunteerId(Long volunteerId);
     Optional<VolunteerDonation> findByVolunteer_IdAndDonationEvent_Id(Long volunteerId, Long donationEventId);
+
     List<VolunteerDonation> findByVolunteer_Id(Long volunteerId);
 
     @Query("SELECT COALESCE(SUM(vd.donateAmount), 0) " +
@@ -21,4 +21,4 @@ public interface VolunteerDonationRepository extends JpaRepository<VolunteerDona
     BigDecimal getTotalDonationByEvent(@Param("donationEventId") Long donationEventId);
 
     List<VolunteerDonation> findByDonationEventId(Long donationEventId);
-} 
+}

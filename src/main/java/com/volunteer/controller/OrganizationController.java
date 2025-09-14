@@ -2,6 +2,8 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.organization.OrganizationRequest;
 import com.volunteer.dto.organization.OrganizationResponse;
+import com.volunteer.dto.organization.OrganizationCreateRequest;
+import com.volunteer.dto.organization.OrganizationListResponse;
 import com.volunteer.entity.Organization;
 import com.volunteer.service.OrganizationService;
 import jakarta.validation.Valid;
@@ -9,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,15 +20,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/organizations")
 public class OrganizationController {
+
     private static final Logger logger = LoggerFactory.getLogger(OrganizationController.class);
 
     @Autowired
     private OrganizationService organizationService;
 
     @PostMapping
-    public ResponseEntity<Organization> createOrganization(@Valid @RequestBody OrganizationRequest request) {
+    public ResponseEntity<OrganizationListResponse> createOrganization(@Valid @RequestBody OrganizationCreateRequest request) {
         logger.info("Create organization endpoint called for name: {}", request.getOrganizationName());
-        Organization response = organizationService.createOrganization(request);
+
+        // Check if current user is admin
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        OrganizationListResponse response = organizationService.createOrganizationByAdmin(request, isAdmin);
         return ResponseEntity.ok(response);
     }
 
@@ -65,4 +76,4 @@ public class OrganizationController {
         // TODO: Return event status/details
         return ResponseEntity.ok("Event status for event " + eventId);
     }
-} 
+}
