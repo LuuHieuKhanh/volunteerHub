@@ -49,6 +49,9 @@ public class LocalStorageService implements FileStorageInterfaceService {
 
     @Override
     public String getFullFileUrl(String fileName) {
+        if(fileName == null) {
+            return null;
+        }
         return domain + fileName;
     }
 

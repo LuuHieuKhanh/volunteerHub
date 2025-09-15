@@ -21,4 +21,6 @@ public interface VolunteerDonationRepository extends JpaRepository<VolunteerDona
     BigDecimal getTotalDonationByEvent(@Param("donationEventId") Long donationEventId);
 
     List<VolunteerDonation> findByDonationEventId(Long donationEventId);
+
+    boolean existsByVolunteerIdAndDonationEventId(Long volunteerId, Long donationEventId);
 }

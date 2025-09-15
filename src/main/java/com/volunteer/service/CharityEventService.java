@@ -10,10 +10,7 @@ import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.VolunteerCharityEvent;
 import com.volunteer.enums.EJoinStatus;
 import com.volunteer.exception.ResourceNotFoundException;
-import com.volunteer.repository.CharityEventRepository;
-import com.volunteer.repository.OrganizationRepository;
-import com.volunteer.repository.VolunteerCharityEventRepository;
-import com.volunteer.repository.VolunteerRepository;
+import com.volunteer.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +39,8 @@ public class CharityEventService {
     private LocalStorageService localStorageService;
     @Autowired
     private VolunteerRepository volunteerRepository;
+    @Autowired
+    private FollowRepository followRepository;
 
     public List<CharityEventResponseList> getAllCharities(Long volunteerId) {
         List<CharityEvent> events = charityEventRepository.findAll();
@@ -49,6 +48,9 @@ public class CharityEventService {
         return events.stream().map(event -> {
             boolean joined = volunteerCharityEventRepository
                     .existsByVolunteerIdAndCharityEventId(volunteerId, event.getId());
+
+            boolean followed = followRepository
+                    .existsByVolunteerIdAndOrganizationId(volunteerId, event.getOrganization().getId());
 
             return CharityEventResponseList.builder()
                     .id(event.getId())
@@ -70,6 +72,7 @@ public class CharityEventService {
                                             .orElse(null))
                             .build())
                     .joined(joined)
+                    .followed(followed)
                     .build();
         }).toList();
     }

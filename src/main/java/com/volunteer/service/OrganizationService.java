@@ -1,5 +1,6 @@
 package com.volunteer.service;
 
+import com.volunteer.dto.event.CharityEventResponseList;
 import com.volunteer.dto.organization.*;
 import com.volunteer.dto.event.CharityEventResponse;
 import com.volunteer.dto.donation.DonationEventResponse;
@@ -18,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +45,10 @@ public class OrganizationService {
     private RequestRepository requestRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-
+    @Autowired
+    private FollowRepository followRepository;
+    @Autowired
+    private LocalStorageService localStorageService;
     @Transactional
     public Organization createOrganization(OrganizationRequest request) {
         logger.info("Creating organization: {}", request.getOrganizationName());
@@ -253,6 +258,87 @@ public class OrganizationService {
         return response;
     }
 
+    public DetailResponse getOrganizationDetailAndCharites(Long organizationId, Long volunteerId) {
+        Organization org = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new RuntimeException("Organization not found with id: " + organizationId));
+
+        boolean followed;
+        if (volunteerId != null) {
+            followed = followRepository.existsByVolunteerIdAndOrganizationId(volunteerId, organizationId);
+        } else {
+            followed = false;
+        }
+
+        List<CharityEvent> orgEvents = charityEventRepository.findByOrganization_Id(organizationId);
+
+        List<CharityEventResponseList> charities = orgEvents.stream().map(event -> {
+            boolean joined = false;
+            if (volunteerId != null) {
+                joined = volunteerCharityEventRepository
+                        .existsByVolunteerIdAndCharityEventId(volunteerId, event.getId());
+            }
+
+            return CharityEventResponseList.builder()
+                    .id(event.getId())
+                    .pic(localStorageService.getFullFileUrl(event.getPic()))
+                    .name(event.getCharityName())
+                    .description(event.getDescription())
+                    .requirement(event.getRequirement())
+                    .todo(event.getTodo())
+                    .destination(event.getDestination())
+                    .dateStart(event.getDateStart())
+                    .numVolunteerRequire(event.getNumVolunteerRequire())
+                    .numVolunteerActual(event.getNumVolunteerActual())
+                    .organization(CharityEventResponseList.OrganizationDto.builder()
+                            .id(org.getId())
+                            .name(org.getOrganizationName())
+                            .avatar(
+                                    Optional.ofNullable(org.getLogo())
+                                            .map(localStorageService::getFullFileUrl)
+                                            .orElse(null))
+                            .build())
+                    .joined(joined)
+                    .followed(followed) // dùng chung trạng thái follow của org
+                    .build();
+        }).toList();
+
+        List<DonationEventResponse> donations = donationEventRepository.findByOrganization_Id(organizationId)
+                .stream()
+                .map(d -> {
+                    BigDecimal totalDonated = volunteerDonationRepository.getTotalDonationByEvent(d.getId());
+
+                    return DonationEventResponse.builder()
+                            .id(d.getId())
+                            .organizationId(d.getOrganization().getId())
+                            .donationName(d.getTitle())
+                            .description(d.getDescription())
+                            .destination(d.getDescription()) // chỗ này sửa lại, bạn đang set nhầm description
+                            .dateStart(d.getDateStart())
+                            .dateEnd(d.getDateEnd())
+                            .targetAmount(d.getMoneyNeed())
+                            .actualAmount(totalDonated)
+                            .note(d.getNote())
+                            .pic(localStorageService.getFullFileUrl(d.getPic()))
+                            .eventStatus(d.getEventStatus())
+                            .createdAt(d.getCreatedAt())
+                            .updatedAt(d.getUpdatedAt())
+                            .build();
+                })
+                .toList();
+
+        return DetailResponse.builder()
+                .id(org.getId())
+                .organizationName(org.getOrganizationName())
+                .description(org.getDescription())
+                .owner(org.getVolunteer().getFullName())
+                .logo(localStorageService.getFullFileUrl(org.getLogo()))
+                .certificate(localStorageService.getFullFileUrl(org.getCertificate()))
+                .contact(org.getVolunteer().getContact())
+                .followed(followed)
+                .charities(charities)
+                .donations(donations)
+                .build();
+    }
     @Transactional
     public OrganizationListResponse updateOrganizationByAdmin(Long id, OrganizationUpdateRequest request) {
         logger.info("Updating organization id: {}", id);

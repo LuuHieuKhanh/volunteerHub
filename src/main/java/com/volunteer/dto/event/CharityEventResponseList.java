@@ -26,6 +26,7 @@ public class CharityEventResponseList {
     private OrganizationDto organization;
 
     private boolean joined;
+    private boolean followed;  // 👈 thêm
 
     @Data
     @NoArgsConstructor

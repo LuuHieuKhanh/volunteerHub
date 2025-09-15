@@ -36,7 +36,7 @@ public class FollowController {
     }
 
     @GetMapping("/volunteer/{volunteerId}")
-    public ResponseEntity<?> getOrganizationsByVolunteer(@PathVariable Long volunteerId) {
+    public ResponseEntity<?> getOrganizationsByVolunteer(@PathVariable("volunteerId") Long volunteerId) {
         List<OrganizationFollowResponse> organizations = followService.getOrganizationsFollowedByVolunteer(volunteerId);
         return ResponseEntity.ok(organizations);
     }

@@ -1,6 +1,7 @@
 package com.volunteer.controller;
 
 import com.volunteer.dto.event.*;
+import com.volunteer.dto.organization.DetailResponse;
 import com.volunteer.entity.VolunteerDonation;
 import com.volunteer.repository.CharityEventRepository;
 import com.volunteer.repository.DonationEventRepository;
@@ -8,6 +9,7 @@ import com.volunteer.repository.VolunteerCharityEventRepository;
 import com.volunteer.repository.VolunteerDonationRepository;
 import com.volunteer.service.CharityEventService;
 import com.volunteer.service.DonationEventService;
+import com.volunteer.service.OrganizationService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,8 @@ public class EventController {
     private VolunteerDonationRepository volunteerDonationRepository;
     @Autowired
     private VolunteerCharityEventRepository volunteerCharityEventRepository;
+    @Autowired
+    private OrganizationService organizationService;
 
     @GetMapping("/charity")
     public ResponseEntity<List<CharityEventResponseList>> searchCharitiesByOrganization(
@@ -231,6 +235,15 @@ public class EventController {
                 .countByOrganizationId(organizationId);
         result.put("charityCreatedCount", charityCreatedCount);
 
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/organization/{id}")
+    public ResponseEntity<DetailResponse> getOrganizationDetail(
+            @PathVariable("id") Long organizationId,
+            @RequestParam(value = "volunteerId", required = false) Long volunteerId
+    ) {
+        DetailResponse result = organizationService.getOrganizationDetailAndCharites(organizationId, volunteerId);
         return ResponseEntity.ok(result);
     }
 } 
