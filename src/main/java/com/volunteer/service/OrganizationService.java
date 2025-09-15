@@ -189,6 +189,8 @@ public class OrganizationService {
                             event.getCharityName(),
                             event.getOrganization().getId(),
                             event.getDescription(),
+                            event.getTodo(),
+                            event.getRequirement(),
                             event.getDestination(),
                             event.getDateStart(),
                             event.getDateEnd(),

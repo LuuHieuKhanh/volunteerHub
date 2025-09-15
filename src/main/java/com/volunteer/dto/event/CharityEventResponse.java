@@ -12,6 +12,8 @@ public class CharityEventResponse {
     private String charityName;
     private Long organizationId;
     private String description;
+    private String todo;
+    private String requirement;
     private String destination;
     private LocalDateTime dateStart;
     private LocalDateTime dateEnd;
@@ -25,11 +27,13 @@ public class CharityEventResponse {
     public CharityEventResponse() {
     }
 
-    public CharityEventResponse(Long id, String charityName, Long organizationId, String description, String destination, LocalDateTime dateStart, LocalDateTime dateEnd, Long numVolunteerRequire, Long numVolunteerActual, String note, String pic, EEventStatus eventStatus) {
+    public CharityEventResponse(Long id, String charityName, Long organizationId, String description, String todo, String requirement, String destination, LocalDateTime dateStart, LocalDateTime dateEnd, Long numVolunteerRequire, Long numVolunteerActual, String note, String pic, EEventStatus eventStatus) {
         this.id = id;
         this.charityName = charityName;
         this.organizationId = organizationId;
         this.description = description;
+        this.todo = todo;
+        this.requirement = requirement;
         this.destination = destination;
         this.dateStart = dateStart;
         this.dateEnd = dateEnd;

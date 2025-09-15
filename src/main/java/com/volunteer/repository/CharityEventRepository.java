@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CharityEventRepository extends JpaRepository<CharityEvent, Long> {
+
     List<CharityEvent> findByOrganization_Id(Long organizationId);
 
     @Query("""
@@ -24,4 +25,6 @@ public interface CharityEventRepository extends JpaRepository<CharityEvent, Long
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
-} 
+
+    List<CharityEvent> findByCharityNameContainingIgnoreCaseOrOrganization_OrganizationNameContainingIgnoreCase(String charityName, String organizationName);
+}

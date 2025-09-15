@@ -137,6 +137,13 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/charity/volunteer/{volunteerId}/history")
+    public ResponseEntity<List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse>> getVolunteerCharityEventHistory(@PathVariable("volunteerId") Long volunteerId) {
+        logger.info("Get volunteer charity event history endpoint called for volunteer id: {}", volunteerId);
+        List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse> response = charityEventService.getVolunteerCharityEventHistory(volunteerId);
+        return ResponseEntity.ok(response);
+    }
+
     // General event listing for users
     @GetMapping("")
     public ResponseEntity<List<?>> getAllEvents() {

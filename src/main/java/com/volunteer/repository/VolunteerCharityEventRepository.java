@@ -23,4 +23,8 @@ public interface VolunteerCharityEventRepository extends JpaRepository<Volunteer
     Long countByCharityEventId(Long charityEventId);
 
     boolean existsByVolunteerAndCharityEvent(Volunteer volunteer, CharityEvent charityEvent);
+
+    List<VolunteerCharityEvent> findByCharityEventId(Long charityEventId);
+
+    List<VolunteerCharityEvent> findByVolunteer_Id(Long volunteerId);
 }
