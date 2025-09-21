@@ -2,6 +2,7 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.auth.JwtResponse;
 import com.volunteer.dto.auth.LoginRequest;
+import com.volunteer.dto.auth.ResetPasswordRequest;
 import com.volunteer.dto.auth.SignupRequest;
 import com.volunteer.dto.auth.TokenRefreshRequest;
 import com.volunteer.dto.auth.TokenRefreshResponse;
@@ -11,6 +12,7 @@ import com.volunteer.repository.VolunteerRepository;
 import com.volunteer.security.jwt.JwtUtils;
 import com.volunteer.security.services.UserDetailsServiceImple;
 import com.volunteer.service.AuthService;
+import com.volunteer.service.PasswordResetService;
 import com.volunteer.service.VolunteerService;
 import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
@@ -29,11 +31,16 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthService authService;
-    private VolunteerService  volunteerService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
+
+    private VolunteerService volunteerService;
     private JwtUtils jwtUtils;
 
     public AuthController(JwtUtils jwtUtils, VolunteerService volunteerService) {
@@ -83,4 +90,27 @@ public class AuthController {
         // TODO: Implement token refresh logic
         return ResponseEntity.ok(new TokenRefreshResponse("newAccessToken", "newRefreshToken"));
     }
-} 
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        logger.info("Reset password endpoint called for email: {}", resetPasswordRequest.getEmail());
+
+        try {
+            passwordResetService.resetPassword(resetPasswordRequest.getEmail());
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "New password has been sent to your email address");
+            response.put("status", "success");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error resetting password for email: {}", resetPasswordRequest.getEmail(), e);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Failed to reset password. Please try again later.");
+            response.put("status", "error");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+}

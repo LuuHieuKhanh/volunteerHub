@@ -75,6 +75,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .requestMatchers(
                         "/api/auth/signin",
                         "/api/auth/signup",
+                        "/api/auth/reset-password",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/uploads/**"

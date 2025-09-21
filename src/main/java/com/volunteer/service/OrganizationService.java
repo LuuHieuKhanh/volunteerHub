@@ -184,7 +184,7 @@ public class OrganizationService {
         // Charity events with volunteer count
         List<CharityEventResponse> charityEventResponses = charityEvents.stream()
                 .map(event -> {
-                    CharityEventResponse eventResponse = new CharityEventResponse(
+                    CharityEventResponse eventResponse = new CharityEventResponse( 
                             event.getId(),
                             event.getCharityName(),
                             event.getOrganization().getId(),
