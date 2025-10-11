@@ -52,6 +52,13 @@ public class EventController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/charity/volunteer/{volunteerId}/history")
+    public ResponseEntity<List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse>> getVolunteerCharityEventHistory(@PathVariable("volunteerId") Long volunteerId) {
+        logger.info("Get volunteer charity eve/charity/volunteer/{volunteerId}/historynt history endpoint called for volunteer id: {}", volunteerId);
+        List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse> response = charityEventService.getVolunteerCharityEventHistory(volunteerId);
+        return ResponseEntity.ok(response);
+    }
+
     // Charity Event Endpoints
     @PostMapping("/charity")
     public ResponseEntity<CharityEventResponse> createCharityEvent(@ModelAttribute @Valid CharityEventRequest request) throws IOException {
@@ -118,7 +125,7 @@ public class EventController {
     }
 
     @PutMapping("/charity/{id}")
-    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable Long id, @Valid @RequestBody CharityEventRequest request) throws IOException {
+    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable("id") Long id, @Valid @RequestBody CharityEventRequest request) throws IOException {
         logger.info("Update charity event endpoint called for id: {}", id);
         CharityEventResponse response = charityEventService.updateCharityEvent(id, request);
         return ResponseEntity.ok(response);
@@ -162,6 +169,13 @@ public class EventController {
     public ResponseEntity<DonationEventResponse> getDonationEventById(@PathVariable("id") Long id) {
         logger.info("Get donation event by id endpoint called for id: {}", id);
         DonationEventResponse response = donationEventService.getDonationEventById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/donation/volunteer/{volunteerId}/history")
+    public ResponseEntity<List<com.volunteer.dto.donation.VolunteerDonationHistoryResponse>> getVolunteerDonationHistory(@PathVariable("volunteerId") Long volunteerId) {
+        logger.info("Get volunteer donation history endpoint called for volunteer id: {}", volunteerId);
+        List<com.volunteer.dto.donation.VolunteerDonationHistoryResponse> response = donationEventService.getVolunteerDonationHistory(volunteerId);
         return ResponseEntity.ok(response);
     }
 

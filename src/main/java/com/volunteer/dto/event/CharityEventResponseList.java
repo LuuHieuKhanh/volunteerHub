@@ -20,6 +20,7 @@ public class CharityEventResponseList {
     private String todo;
     private String destination;
     private LocalDateTime dateStart;
+    private LocalDateTime dateEnd;
     private Long numVolunteerRequire;
     private Long numVolunteerActual;
 

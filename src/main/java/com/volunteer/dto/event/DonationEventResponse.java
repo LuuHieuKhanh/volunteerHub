@@ -9,6 +9,7 @@ import lombok.Data;
 public class DonationEventResponse {
     private Long id;
     private Long organizationId;
+    private String organizationName;
     private String title;
     private String description;
     private BigDecimal moneyNeed;
@@ -24,9 +25,10 @@ public class DonationEventResponse {
 
     public DonationEventResponse() {}
 
-    public DonationEventResponse(Long id, Long organizationId, String title, String description, BigDecimal moneyNeed, String eventStatus, boolean hasDonate, String note, String qrPic, String bankAccount, String pic, LocalDateTime dateStart, LocalDateTime dateEnd, BigDecimal totalDonated) {
+    public DonationEventResponse(Long id, Long organizationId, String organizationName, String title, String description, BigDecimal moneyNeed, String eventStatus, boolean hasDonate, String note, String qrPic, String bankAccount, String pic, LocalDateTime dateStart, LocalDateTime dateEnd, BigDecimal totalDonated) {
         this.id = id;
         this.organizationId = organizationId;
+        this.organizationName = organizationName;
         this.title = title;
         this.description = description;
         this.moneyNeed = moneyNeed;

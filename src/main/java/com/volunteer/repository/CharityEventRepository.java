@@ -25,4 +25,6 @@ public interface CharityEventRepository extends JpaRepository<CharityEvent, Long
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    List<CharityEvent> findByCharityNameContainingIgnoreCaseOrOrganization_OrganizationNameContainingIgnoreCase(String charityName, String organizationName);
 } 

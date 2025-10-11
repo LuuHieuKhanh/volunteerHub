@@ -13,10 +13,7 @@ import com.volunteer.repository.AccountRepository;
 import com.volunteer.repository.OrganizationRepository;
 import com.volunteer.repository.RequestRepository;
 import com.volunteer.repository.VolunteerRepository;
-import com.volunteer.service.RequestService;
-import com.volunteer.service.VolunteerService;
-import com.volunteer.service.OrganizationService;
-import com.volunteer.service.AdminDashboardService;
+import com.volunteer.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +51,10 @@ public class AdminController {
     private OrganizationRepository organizationRepository;
     @Autowired
     private AdminDashboardService adminDashboardService;
+    @Autowired
+    private DonationEventService donationEventService;
+    @Autowired
+    private CharityEventService charityEventService;
 
     // Get all volunteers (accounts)
     @GetMapping("/accounts")
@@ -262,25 +263,122 @@ public class AdminController {
         return ResponseEntity.ok(List.of());
     }
 
-    // View all charity events
+    // ==================== CHARITY EVENT MANAGEMENT APIs ====================
+    /**
+     * Get all charity events (no pagination) GET
+     * /api/admin/charity-events?search=keyword
+     */
     @GetMapping("/charity-events")
-    public ResponseEntity<List<?>> getAllCharityEvents() {
-        // TODO: Return all charity events
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.charity.CharityEventListResponse>> getAllCharityEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all charity events with search: {}", search);
+        List<com.volunteer.dto.charity.CharityEventListResponse> events = charityEventService.getAllCharityEvents(search);
+        return ResponseEntity.ok(events);
+    }
+
+    /**
+     * Get charity event detail by ID GET /api/admin/charity-events/{id}
+     */
+    @GetMapping("/charity-events/{id}")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventDetailResponse> getCharityEventDetail(@PathVariable("id") Long id) {
+        logger.info("Getting charity event detail for id: {}", id);
+        com.volunteer.dto.charity.CharityEventDetailResponse event = charityEventService.getCharityEventDetail(id);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Create charity event POST /api/admin/charity-events
+     */
+    @PostMapping("/charity-events")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> createCharityEvent(
+            @RequestBody com.volunteer.dto.charity.CharityEventCreateRequest request) {
+        logger.info("Creating charity event: {}", request.getCharityName());
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.createCharityEventAdmin(request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Update charity event PUT /api/admin/charity-events/{id}
+     */
+    @PutMapping("/charity-events/{id}")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> updateCharityEvent(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.charity.CharityEventUpdateRequest request) {
+        logger.info("Updating charity event id: {}", id);
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.updateCharityEvent(id, request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Soft delete charity event DELETE /api/admin/charity-events/{id}
+     */
+    @DeleteMapping("/charity-events/{id}")
+    public ResponseEntity<MessageResponse> deleteCharityEvent(@PathVariable("id") Long id) {
+        logger.info("Soft deleting charity event id: {}", id);
+        charityEventService.softDeleteCharityEvent(id);
+        return ResponseEntity.ok(new MessageResponse("Charity event deleted successfully"));
+    }
+
+    /**
+     * Update charity event status PUT /api/admin/charity-events/{id}/status
+     */
+    @PutMapping("/charity-events/{id}/status")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> updateCharityEventStatus(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.charity.CharityEventStatusUpdateRequest request) {
+        logger.info("Updating charity event status for id: {}", id);
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.updateCharityEventStatus(id, request);
+        return ResponseEntity.ok(event);
     }
 
     // View all donation events
     @GetMapping("/donation-events")
-    public ResponseEntity<List<?>> getAllDonationEvents() {
-        // TODO: Return all donation events
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.donation.DonationEventListResponse>> getAllDonationEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all donation events with search: {}", search);
+        List<com.volunteer.dto.donation.DonationEventListResponse> events = donationEventService.getAllDonationEvents(search);
+        return ResponseEntity.ok(events);
     }
 
-    // View all pending requests
-    @GetMapping("/pending-requests")
-    public ResponseEntity<List<?>> getAllPendingRequests() {
-        // TODO: Return all pending requests
-        return ResponseEntity.ok(List.of());
+    @GetMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventDetailResponse> getDonationEventDetail(@PathVariable("id") Long id) {
+        logger.info("Getting donation event detail for id: {}", id);
+        com.volunteer.dto.donation.DonationEventDetailResponse event = donationEventService.getDonationEventDetail(id);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Update donation event PUT /api/admin/donation-events/{id}
+     */
+    @PutMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEvent(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventUpdateRequest request) {
+        logger.info("Updating donation event id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEventAdmin(id, request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Soft delete donation event DELETE /api/admin/donation-events/{id}
+     */
+    @DeleteMapping("/donation-events/{id}")
+    public ResponseEntity<MessageResponse> deleteDonationEvent(@PathVariable("id") Long id) {
+        logger.info("Soft deleting donation event id: {}", id);
+        donationEventService.softDeleteDonationEvent(id);
+        return ResponseEntity.ok(new MessageResponse("Donation event deleted successfully"));
+    }
+
+    /**
+     * Update donation event status PUT /api/admin/donation-events/{id}/status
+     */
+    @PutMapping("/donation-events/{id}/status")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEventStatus(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventStatusUpdateRequest request) {
+        logger.info("Updating donation event status for id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEventStatus(id, request);
+        return ResponseEntity.ok(event);
     }
 
     // View all approved requests

@@ -1,5 +1,6 @@
 package com.volunteer.service;
 
+import com.volunteer.dto.charity.*;
 import com.volunteer.dto.event.CharityEventRequest;
 import com.volunteer.dto.event.CharityEventResponse;
 import com.volunteer.dto.event.CharityEventResponseList;
@@ -9,6 +10,7 @@ import com.volunteer.entity.Organization;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.VolunteerCharityEvent;
 import com.volunteer.enums.EJoinStatus;
+import com.volunteer.enums.RequestStatus;
 import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.*;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -23,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CharityEventService {
@@ -41,6 +45,8 @@ public class CharityEventService {
     private VolunteerRepository volunteerRepository;
     @Autowired
     private FollowRepository followRepository;
+    @Autowired
+    private RequestRepository requestRepository;
 
     public List<CharityEventResponseList> getAllCharities(Long volunteerId) {
         List<CharityEvent> events = charityEventRepository.findAll();
@@ -75,6 +81,20 @@ public class CharityEventService {
                     .followed(followed)
                     .build();
         }).toList();
+    }
+
+    public List<CharityEventListResponse> getAllCharityEvents(String search) {
+        logger.info("Getting all charity events with search: {}", search);
+        List<CharityEvent> events;
+        if (StringUtils.hasText(search)) {
+            events = charityEventRepository.findByCharityNameContainingIgnoreCaseOrOrganization_OrganizationNameContainingIgnoreCase(search, search);
+        } else {
+            events = charityEventRepository.findAll();
+        }
+
+        return events.stream()
+                .map(this::toListResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -176,6 +196,7 @@ public class CharityEventService {
                 .todo(event.getTodo())
                 .destination(event.getDestination())
                 .dateStart(event.getDateStart())
+                .dateEnd(event.getDateEnd())
                 .numVolunteerRequire(event.getNumVolunteerRequire())
                 .numVolunteerActual(event.getNumVolunteerActual())
                 .organization(CharityEventResponseList.OrganizationDto.builder()
@@ -251,6 +272,81 @@ public class CharityEventService {
     }
 
     @Transactional
+    public CharityEventListResponse updateCharityEvent(Long id, CharityEventUpdateRequest request) {
+        logger.info("Updating charity event id: {}", id);
+
+        CharityEvent event = charityEventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
+
+        if (request.getOrganizationId() != null) {
+            Organization organization = organizationRepository.findById(request.getOrganizationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + request.getOrganizationId()));
+            event.setOrganization(organization);
+        }
+
+        if (request.getCharityName() != null) {
+            event.setCharityName(request.getCharityName());
+        }
+        if (request.getDescription() != null) {
+            event.setDescription(request.getDescription());
+        }
+        if (request.getTodo() != null) {
+            event.setTodo(request.getTodo());
+        }
+        if (request.getRequirement() != null) {
+            event.setRequirement(request.getRequirement());
+        }
+        if (request.getDestination() != null) {
+            event.setDestination(request.getDestination());
+        }
+        if (request.getDateStart() != null) {
+            event.setDateStart(request.getDateStart());
+        }
+        if (request.getDateEnd() != null) {
+            event.setDateEnd(request.getDateEnd());
+        }
+        if (request.getNumVolunteerRequire() != null) {
+            event.setNumVolunteerRequire(request.getNumVolunteerRequire());
+        }
+        if (request.getNote() != null) {
+            event.setNote(request.getNote());
+        }
+        if (request.getPic() != null) {
+            event.setPic(request.getPic());
+        }
+        if (request.getEventStatus() != null) {
+            event.setEventStatus(request.getEventStatus());
+        }
+
+        CharityEvent savedEvent = charityEventRepository.save(event);
+        return toListResponse(savedEvent);
+    }
+
+    @Transactional
+    public void softDeleteCharityEvent(Long id) {
+        logger.info("Soft deleting charity event id: {}", id);
+        CharityEvent event = charityEventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
+
+        event.setDeleted(true);
+        event.setDeletedAt(LocalDateTime.now());
+        charityEventRepository.save(event);
+    }
+
+    @Transactional
+    public CharityEventListResponse updateCharityEventStatus(Long id, CharityEventStatusUpdateRequest request) {
+        logger.info("Updating charity event status for id: {} to {}", id, request.getEventStatus());
+
+        CharityEvent event = charityEventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
+
+        event.setEventStatus(request.getEventStatus());
+        CharityEvent savedEvent = charityEventRepository.save(event);
+
+        return toListResponse(savedEvent);
+    }
+
+    @Transactional
     public void deleteCharityEvent(Long id) {
         logger.info("Deleting charity event id: {}", id);
         CharityEvent event = charityEventRepository.findById(id)
@@ -273,5 +369,187 @@ public class CharityEventService {
                 localStorageService.getFullFileUrl(event.getPic()),
                 event.getEventStatus()
         );
+    }
+
+    public CharityEventDetailResponse getCharityEventDetail(Long id) {
+        logger.info("Getting charity event detail for id: {}", id);
+        CharityEvent event = charityEventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Charity event not found with id: " + id));
+
+        return toDetailResponse(event);
+    }
+
+    @Transactional
+    public CharityEventListResponse createCharityEventAdmin(CharityEventCreateRequest request) {
+        logger.info("Creating charity event: {}", request.getCharityName());
+        Organization organization = organizationRepository.findById(request.getOrganizationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + request.getOrganizationId()));
+        CharityEvent event = CharityEvent.builder()
+                .organization(organization)
+                .charityName(request.getCharityName())
+                .description(request.getDescription())
+                .todo(request.getTodo())
+                .requirement(request.getRequirement())
+                .destination(request.getDestination())
+                .dateStart(request.getDateStart())
+                .dateEnd(request.getDateEnd())
+                .numVolunteerRequire(request.getNumVolunteerRequire())
+                .numVolunteerActual(0L)
+                .note(request.getNote())
+                .pic(request.getPic())
+                .eventStatus(request.getEventStatus())
+                .build();
+
+        CharityEvent savedEvent = charityEventRepository.save(event);
+        return toListResponse(savedEvent);
+    }
+
+    private CharityEventListResponse toListResponse(CharityEvent event) {
+        CharityEventListResponse response = new CharityEventListResponse();
+        response.setId(event.getId());
+        response.setCharityName(event.getCharityName());
+        response.setDescription(event.getDescription());
+        response.setTodo(event.getTodo());
+        response.setRequirement(event.getRequirement());
+        response.setDestination(event.getDestination());
+        response.setDateStart(event.getDateStart());
+        response.setDateEnd(event.getDateEnd());
+        response.setNumVolunteerRequire(event.getNumVolunteerRequire());
+        response.setNumVolunteerActual(event.getNumVolunteerActual());
+        response.setNote(event.getNote());
+        response.setPic(localStorageService.getFullFileUrl(event.getPic()));
+        response.setEventStatus(event.getEventStatus());
+        response.setCreatedAt(event.getCreatedAt());
+        response.setUpdatedAt(event.getUpdatedAt());
+
+        // Organization info
+        if (event.getOrganization() != null) {
+            Organization org = event.getOrganization();
+            response.setOrganizationId(org.getId());
+            response.setOrganizationName(org.getOrganizationName());
+            response.setOrganizationDescription(org.getDescription());
+        }
+        // Calculate total participants count
+        List<VolunteerCharityEvent> participants = volunteerCharityEventRepository.findByCharityEventId(event.getId());
+        response.setTotalParticipants((long) participants.size());
+
+        return response;
+    }
+
+    private CharityEventDetailResponse toDetailResponse(CharityEvent event) {
+        CharityEventDetailResponse response = new CharityEventDetailResponse();
+        response.setId(event.getId());
+        response.setCharityName(event.getCharityName());
+        response.setDescription(event.getDescription());
+        response.setTodo(event.getTodo());
+        response.setRequirement(event.getRequirement());
+        response.setDestination(event.getDestination());
+        response.setDateStart(event.getDateStart());
+        response.setDateEnd(event.getDateEnd());
+        response.setNumVolunteerRequire(event.getNumVolunteerRequire());
+        response.setNumVolunteerActual(event.getNumVolunteerActual());
+        response.setNote(event.getNote());
+        response.setPic(localStorageService.getFullFileUrl(event.getPic()));
+        response.setEventStatus(event.getEventStatus());
+        response.setCreatedAt(event.getCreatedAt());
+        response.setUpdatedAt(event.getUpdatedAt());
+
+        // Organization info
+        if (event.getOrganization() != null) {
+            Organization org = event.getOrganization();
+            response.setOrganizationId(org.getId());
+            response.setOrganizationName(org.getOrganizationName());
+            response.setOrganizationDescription(org.getDescription());
+        }
+        // Get participants list
+        List<VolunteerCharityEvent> participants = volunteerCharityEventRepository.findByCharityEventId(event.getId());
+        response.setTotalParticipants((long) participants.size());
+
+        // Map participants list
+        List<ParticipantResponse> participantResponses = participants.stream()
+                .map(participation -> {
+                    ParticipantResponse participantResponse = new ParticipantResponse();
+                    participantResponse.setId(participation.getId());
+                    participantResponse.setJoinStatus(participation.getJoinStatus());
+                    participantResponse.setCreatedAt(participation.getCreatedAt());
+                    participantResponse.setUpdatedAt(participation.getUpdatedAt());
+
+                    if (participation.getVolunteer() != null) {
+                        participantResponse.setVolunteerId(participation.getVolunteer().getId());
+                        participantResponse.setVolunteerFullName(participation.getVolunteer().getFullName());
+                        participantResponse.setVolunteerContact(participation.getVolunteer().getContact());
+                        if (participation.getVolunteer().getAccount() != null) {
+                            participantResponse.setVolunteerEmail(participation.getVolunteer().getAccount().getEmail());
+                        }
+                    }
+
+                    return participantResponse;
+                })
+                .collect(Collectors.toList());
+        response.setParticipants(participantResponses);
+
+        // Get available organizations (with approved requests)
+        List<Organization> allOrganizations = organizationRepository.findAll();
+        List<OrganizationOptionResponse> availableOrganizations = allOrganizations.stream()
+                .filter(org -> !org.isDeleted() && requestRepository.existsByOrganizationAndStatus(org, RequestStatus.APPROVED))
+                .map(org -> {
+                    OrganizationOptionResponse orgResponse = new OrganizationOptionResponse();
+                    orgResponse.setId(org.getId());
+                    orgResponse.setOrganizationName(org.getOrganizationName());
+                    orgResponse.setDescription(org.getDescription());
+                    return orgResponse;
+                })
+                .collect(Collectors.toList());
+        response.setAvailableOrganizations(availableOrganizations);
+
+        return response;
+    }
+
+    public List<VolunteerCharityEventHistoryResponse> getVolunteerCharityEventHistory(Long volunteerId) {
+        logger.info("Getting charity event history for volunteer id: {}", volunteerId);
+
+        List<VolunteerCharityEvent> participations = volunteerCharityEventRepository.findByVolunteer_Id(volunteerId);
+
+        return participations.stream()
+                .map(participation -> {
+                    VolunteerCharityEventHistoryResponse response = new VolunteerCharityEventHistoryResponse();
+
+                    // Participation info
+                    response.setId(participation.getId());
+                    response.setJoinStatus(participation.getJoinStatus());
+                    response.setParticipationCreatedAt(participation.getCreatedAt());
+                    response.setParticipationUpdatedAt(participation.getUpdatedAt());
+
+                    // Charity event info
+                    if (participation.getCharityEvent() != null) {
+                        CharityEvent event = participation.getCharityEvent();
+                        response.setCharityEventId(event.getId());
+                        response.setCharityEventName(event.getCharityName());
+                        response.setCharityEventDescription(event.getDescription());
+                        response.setTodo(event.getTodo());
+                        response.setRequirement(event.getRequirement());
+                        response.setDestination(event.getDestination());
+                        response.setDateStart(event.getDateStart());
+                        response.setDateEnd(event.getDateEnd());
+                        response.setNumVolunteerRequire(event.getNumVolunteerRequire());
+                        response.setNumVolunteerActual(event.getNumVolunteerActual());
+                        response.setNote(event.getNote());
+                        response.setPic(localStorageService.getFullFileUrl(event.getPic()));
+                        response.setEventStatus(event.getEventStatus());
+                        response.setEventCreatedAt(event.getCreatedAt());
+                        response.setEventUpdatedAt(event.getUpdatedAt());
+
+                        // Organization info
+                        if (event.getOrganization() != null) {
+                            Organization org = event.getOrganization();
+                            response.setOrganizationId(org.getId());
+                            response.setOrganizationName(org.getOrganizationName());
+                            response.setOrganizationDescription(org.getDescription());
+                        }
+                    }
+
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 }

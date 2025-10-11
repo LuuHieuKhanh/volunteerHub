@@ -72,6 +72,7 @@ public class AuthService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String jwt = jwtUtils.generateJwtToken(authentication);
         String refreshToken = jwtUtils.generateRefreshToken(authentication);
-        return new JwtResponse(jwt, refreshToken, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(), userDetails.getAuthorities().iterator().next().getAuthority());
+        Optional<Volunteer> volunteer = volunteerRepository.findByAccount_Email(loginRequest.getEmail());
+        return new JwtResponse(jwt, refreshToken, volunteer.get().getId(), userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(), userDetails.getAuthorities().iterator().next().getAuthority());
     }
-} 
+}

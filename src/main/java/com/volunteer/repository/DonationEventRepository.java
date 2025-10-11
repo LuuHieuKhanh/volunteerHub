@@ -25,4 +25,6 @@ public interface DonationEventRepository extends JpaRepository<DonationEvent, Lo
             @Param("fromDateTime") LocalDateTime fromDateTime,
             @Param("toDateTime") LocalDateTime toDateTime
     );
+
+    List<DonationEvent> findByTitleContainingIgnoreCaseOrOrganization_OrganizationNameContainingIgnoreCase(String title, String organizationName);
 } 

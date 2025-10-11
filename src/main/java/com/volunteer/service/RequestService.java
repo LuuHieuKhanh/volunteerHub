@@ -37,6 +37,11 @@ public class RequestService {
     @Autowired
     private VolunteerRepository volunteerRepository;
 
+    public Request createRequest(Request request) {
+        logger.info("Create request called: {}", request);
+        return requestRepository.save(request);
+    }
+
     public List<RequestListResponse> getAllRequests(String search) {
         logger.info("Getting all requests with search: {}", search);
         List<Request> requests;
