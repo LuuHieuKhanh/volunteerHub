@@ -37,6 +37,9 @@ public class RequestService {
     @Autowired
     private VolunteerRepository volunteerRepository;
 
+    @Autowired
+    private LocalStorageService localStorageService;
+
     public Request createRequest(Request request) {
         logger.info("Create request called: {}", request);
         return requestRepository.save(request);
@@ -162,7 +165,8 @@ public class RequestService {
             response.setOrganizationAddress(""); // Organization entity doesn't have address field
             response.setOrganizationEmail(""); // Organization entity doesn't have email field
             response.setOrganizationWebsite(""); // Organization entity doesn't have website field
-            response.setOrganizationLogo(org.getLogo());
+            response.setOrganizationLogo(localStorageService.getFullFileUrl(org.getLogo()));
+            response.setOrganizationCertificate(localStorageService.getFullFileUrl(org.getCertificate()));
             response.setOrganizationCreatedAt(org.getCreatedAt());
             response.setOrganizationUpdatedAt(org.getUpdatedAt());
         }

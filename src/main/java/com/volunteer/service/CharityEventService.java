@@ -9,6 +9,7 @@ import com.volunteer.entity.CharityEvent;
 import com.volunteer.entity.Organization;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.VolunteerCharityEvent;
+import com.volunteer.enums.EEventStatus;
 import com.volunteer.enums.EJoinStatus;
 import com.volunteer.enums.RequestStatus;
 import com.volunteer.exception.ResourceNotFoundException;
@@ -48,8 +49,14 @@ public class CharityEventService {
     @Autowired
     private RequestRepository requestRepository;
 
-    public List<CharityEventResponseList> getAllCharities(Long volunteerId) {
-        List<CharityEvent> events = charityEventRepository.findAll();
+    public List<CharityEventResponseList> getAllCharities(Long volunteerId, String search) {
+        List<CharityEvent> events;
+
+        if (search != null && !search.trim().isEmpty()) {
+            events = charityEventRepository.findByCharityNameContainingIgnoreCaseOrOrganization_OrganizationNameContainingIgnoreCase(search, search);
+        } else {
+            events = charityEventRepository.findAll();
+        }
 
         return events.stream().map(event -> {
             boolean joined = volunteerCharityEventRepository
@@ -113,6 +120,7 @@ public class CharityEventService {
         event.setDateEnd(request.getDateEnd());
         event.setNumVolunteerRequire(request.getNumVolunteerRequire());
         event.setNote(request.getNote());
+        event.setEventStatus(EEventStatus.INACTIVE);
         if (request.getPic() != null && !request.getPic().isEmpty()) {
             String filePath = localStorageService.uploadFile(request.getPic());
             event.setPic(filePath);

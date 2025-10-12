@@ -46,9 +46,10 @@ public class EventController {
 
     @GetMapping("/charity")
     public ResponseEntity<List<CharityEventResponseList>> searchCharitiesByOrganization(
-            @RequestParam(value = "id", required = false) Long volunteerId // truyền volunteerId để check joined
+            @RequestParam(value = "id", required = false) Long volunteerId, // truyền volunteerId để check joined
+            @RequestParam(value = "search", required = false) String search
     ) {
-        List<CharityEventResponseList> result = charityEventService.getAllCharities(volunteerId);
+        List<CharityEventResponseList> result = charityEventService.getAllCharities(volunteerId, search);
         return ResponseEntity.ok(result);
     }
 

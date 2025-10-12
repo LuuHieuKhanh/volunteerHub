@@ -147,8 +147,8 @@ public class OrganizationService {
         response.setId(organization.getId());
         response.setOrganizationName(organization.getOrganizationName());
         response.setDescription(organization.getDescription());
-        response.setCertificate(organization.getCertificate());
-        response.setLogo(organization.getLogo());
+        response.setCertificate(localStorageService.getFullFileUrl(organization.getCertificate()));
+        response.setLogo(localStorageService.getFullFileUrl(organization.getLogo()));
         response.setCreatedAt(organization.getCreatedAt());
         response.setUpdatedAt(organization.getUpdatedAt());
         response.setDeleted(organization.isDeleted());
@@ -200,7 +200,7 @@ public class OrganizationService {
                             event.getNumVolunteerRequire(),
                             event.getNumVolunteerActual(),
                             event.getNote(),
-                            event.getPic(),
+                            localStorageService.getFullFileUrl(event.getPic()),
                             event.getEventStatus()
                     );
                     eventResponse.setJoinStatus(null); // joinStatus not applicable for organization view
@@ -228,7 +228,7 @@ public class OrganizationService {
                     eventResponse.setTargetAmount(event.getMoneyNeed());
                     eventResponse.setActualAmount(actualAmount);
                     eventResponse.setNote(event.getNote());
-                    eventResponse.setPic(event.getPic());
+                    eventResponse.setPic(localStorageService.getFullFileUrl(event.getPic()));
                     eventResponse.setEventStatus(event.getEventStatus());
                     eventResponse.setCreatedAt(event.getCreatedAt());
                     eventResponse.setUpdatedAt(event.getUpdatedAt());

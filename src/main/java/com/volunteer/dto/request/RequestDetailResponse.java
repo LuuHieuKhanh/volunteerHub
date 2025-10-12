@@ -25,6 +25,7 @@ public class RequestDetailResponse {
     private String organizationEmail;
     private String organizationWebsite;
     private String organizationLogo;
+    private String organizationCertificate;
     private LocalDateTime organizationCreatedAt;
     private LocalDateTime organizationUpdatedAt;
 
