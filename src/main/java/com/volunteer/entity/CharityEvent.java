@@ -61,6 +61,9 @@ public class CharityEvent extends BaseEntity {
     @OneToMany(mappedBy = "charityEvent")
     private List<VolunteerCharityEvent> participants;
 
+    @OneToMany(mappedBy = "charityEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Request> requests;
+
     public void increaseVolunteerCount() {
         if (this.numVolunteerActual == null) {
             this.numVolunteerActual = 0L;

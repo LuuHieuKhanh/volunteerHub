@@ -36,5 +36,15 @@ public class Request extends BaseEntity {
     @Column(name = "deny_reason", columnDefinition = "NVARCHAR(MAX)")
     private String denyReason;
 
+    @Column(name = "edit_reason", columnDefinition = "NVARCHAR(MAX)")
+    private String editReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "charity_id")
+    private CharityEvent charityEvent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "donation_id")
+    private DonationEvent donationEvent;
 }
 

@@ -58,4 +58,8 @@ public class DonationEvent extends BaseEntity {
 
     @Column(name = "date_end", nullable = false)
     private LocalDateTime dateEnd;
+
+    @OneToMany(mappedBy = "donationEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Request> requests;
+
 } 

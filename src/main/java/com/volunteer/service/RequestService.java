@@ -4,9 +4,7 @@ import com.volunteer.dto.request.RequestDetailResponse;
 import com.volunteer.dto.request.RequestListResponse;
 import com.volunteer.dto.request.RequestStatusUpdateRequest;
 import com.volunteer.dto.request.MessageResponse;
-import com.volunteer.entity.Request;
-import com.volunteer.entity.Organization;
-import com.volunteer.entity.Volunteer;
+import com.volunteer.entity.*;
 import com.volunteer.enums.RequestStatus;
 import com.volunteer.enums.Role;
 import com.volunteer.exception.ResourceNotFoundException;
@@ -142,6 +140,28 @@ public class RequestService {
                 response.setVolunteerEmail(volunteer.getAccount().getEmail());
             }
         }
+
+        // Charity Event info (if any)
+        if (request.getCharityEvent() != null) {
+            CharityEvent charity = request.getCharityEvent();
+            response.setCharityEventId(charity.getId());
+            response.setCharityEventName(charity.getCharityName());
+            response.setNumberOfVolunteers(charity.getNumVolunteerRequire());
+            response.setDestination(charity.getDestination());
+            response.setCharityEventDateStart(charity.getDateStart());
+            response.setCharityEventDateEnd(charity.getDateEnd());
+        }
+
+        // Donation Event info (if any)
+        if (request.getDonationEvent() != null) {
+            DonationEvent donation = request.getDonationEvent();
+            response.setDonationEventId(donation.getId());
+            response.setDonationEventName(donation.getTitle());
+            response.setMoneyNeed(donation.getMoneyNeed());
+            response.setDonationEventDateStart(donation.getDateStart());
+            response.setDonationEventDateEnd(donation.getDateEnd());
+        }
+
 
         return response;
     }

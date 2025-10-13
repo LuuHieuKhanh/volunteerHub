@@ -126,7 +126,7 @@ public class EventController {
     }
 
     @PutMapping("/charity/{id}")
-    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable("id") Long id, @Valid @RequestBody CharityEventRequest request) throws IOException {
+    public ResponseEntity<CharityEventResponse> updateCharityEvent(@PathVariable("id") Long id, @Valid @ModelAttribute CharityEventRequest request) throws IOException {
         logger.info("Update charity event endpoint called for id: {}", id);
         CharityEventResponse response = charityEventService.updateCharityEvent(id, request);
         return ResponseEntity.ok(response);

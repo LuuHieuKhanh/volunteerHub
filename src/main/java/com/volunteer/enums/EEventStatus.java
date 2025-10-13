@@ -10,4 +10,7 @@ public enum EEventStatus {
     FULFILLED,
     ACTIVE,
     INACTIVE,
+    PENDING,
+    APPROVED,
+    REJECTED,
 }

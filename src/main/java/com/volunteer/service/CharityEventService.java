@@ -5,13 +5,8 @@ import com.volunteer.dto.event.CharityEventRequest;
 import com.volunteer.dto.event.CharityEventResponse;
 import com.volunteer.dto.event.CharityEventResponseList;
 import com.volunteer.dto.event.VolunteerEventParticipationResponse;
-import com.volunteer.entity.CharityEvent;
-import com.volunteer.entity.Organization;
-import com.volunteer.entity.Volunteer;
-import com.volunteer.entity.VolunteerCharityEvent;
-import com.volunteer.enums.EEventStatus;
-import com.volunteer.enums.EJoinStatus;
-import com.volunteer.enums.RequestStatus;
+import com.volunteer.entity.*;
+import com.volunteer.enums.*;
 import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.*;
 import org.slf4j.Logger;
@@ -49,6 +44,8 @@ public class CharityEventService {
     @Autowired
     private RequestRepository requestRepository;
 
+    @Autowired RequestService requestService;
+
     public List<CharityEventResponseList> getAllCharities(Long volunteerId, String search) {
         List<CharityEvent> events;
 
@@ -57,6 +54,10 @@ public class CharityEventService {
         } else {
             events = charityEventRepository.findAll();
         }
+
+        events = events.stream()
+                .filter(e -> e.getEventStatus() != EEventStatus.PENDING)
+                .toList();
 
         return events.stream().map(event -> {
             boolean joined = volunteerCharityEventRepository
@@ -120,12 +121,23 @@ public class CharityEventService {
         event.setDateEnd(request.getDateEnd());
         event.setNumVolunteerRequire(request.getNumVolunteerRequire());
         event.setNote(request.getNote());
-        event.setEventStatus(EEventStatus.INACTIVE);
+        event.setEventStatus(EEventStatus.PENDING);
         if (request.getPic() != null && !request.getPic().isEmpty()) {
             String filePath = localStorageService.uploadFile(request.getPic());
             event.setPic(filePath);
         }
         CharityEvent saved = charityEventRepository.save(event);
+
+
+        Request req = Request.builder()
+                .status(RequestStatus.PENDING)
+                .requestType(ERequestType.CHARITY_REGISTRATION)
+                .volunteer(org.getVolunteer())
+                .organization(org)
+                .charityEvent(saved)
+                .build();
+
+        Request savedRequest = requestService.createRequest(req);
         return toResponse(saved);
     }
 
@@ -276,6 +288,17 @@ public class CharityEventService {
             event.setPic(filePath);
         }
         CharityEvent saved = charityEventRepository.save(event);
+
+        Request req = Request.builder()
+                .status(RequestStatus.PENDING)
+                .requestType(ERequestType.CHARITY_EDITION)
+                .volunteer(event.getOrganization().getVolunteer())
+                .organization(event.getOrganization())
+                .charityEvent(event)
+                .build();
+
+        Request savedRequest = requestService.createRequest(req);
+
         return toResponse(saved);
     }
 

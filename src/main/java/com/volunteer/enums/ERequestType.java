@@ -2,5 +2,9 @@ package com.volunteer.enums;
 
 public enum ERequestType {
     ORGANIZATION_REGISTRATION,
+    CHARITY_REGISTRATION,
+    CHARITY_EDITION,
+    DONATION_REGISTRATION,
+    DONATION_EDITION,
     OTHER_REQUEST_TYPE
 } 

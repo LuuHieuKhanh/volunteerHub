@@ -4,10 +4,9 @@ import com.volunteer.dto.donation.*;
 import com.volunteer.dto.event.DonationEventRequest;
 import com.volunteer.dto.event.DonationEventResponse;
 import com.volunteer.dto.event.VolunteerDonationResponse;
-import com.volunteer.entity.DonationEvent;
-import com.volunteer.entity.Organization;
-import com.volunteer.entity.Volunteer;
-import com.volunteer.entity.VolunteerDonation;
+import com.volunteer.entity.*;
+import com.volunteer.enums.EEventStatus;
+import com.volunteer.enums.ERequestType;
 import com.volunteer.enums.RequestStatus;
 import com.volunteer.exception.ResourceNotFoundException;
 import com.volunteer.repository.DonationEventRepository;
@@ -43,6 +42,9 @@ public class DonationEventService {
     private VolunteerDonationRepository volunteerDonationRepository;
     @Autowired
     private RequestRepository requestRepository;
+    @Autowired
+    private RequestService requestService;
+
     public List<DonationEventListResponse> getAllDonationEvents(String search) {
         logger.info("Getting all donation events with search: {}", search);
         List<DonationEvent> events;
@@ -82,7 +84,7 @@ public class DonationEventService {
         event.setBankAccount(request.getBankAccount());
         event.setDateStart(request.getDateStart());
         event.setDateEnd(request.getDateEnd());
-
+        event.setEventStatus(EEventStatus.PENDING);
         // ✅ Xử lý upload file ảnh QR
         if (request.getQrPic() != null && !request.getQrPic().isEmpty()) {
             String qrPath = localStorageService.uploadFile(request.getQrPic());
@@ -96,6 +98,17 @@ public class DonationEventService {
         }
 
         DonationEvent saved = donationEventRepository.save(event);
+
+
+        Request req = Request.builder()
+                .status(RequestStatus.PENDING)
+                .requestType(ERequestType.DONATION_REGISTRATION)
+                .volunteer(org.getVolunteer())
+                .organization(org)
+                .donationEvent(saved)
+                .build();
+
+        Request savedRequest = requestService.createRequest(req);
         return toResponse(saved, BigDecimal.valueOf(0));
     }
 
@@ -263,6 +276,17 @@ public class DonationEventService {
         }
 
         DonationEvent saved = donationEventRepository.save(event);
+
+
+        Request req = Request.builder()
+                .status(RequestStatus.PENDING)
+                .requestType(ERequestType.DONATION_EDITION)
+                .volunteer(event.getOrganization().getVolunteer())
+                .organization(event.getOrganization())
+                .donationEvent(saved)
+                .build();
+
+        Request savedRequest = requestService.createRequest(req);
         return toResponse(saved, BigDecimal.valueOf(0));
     }
 
