@@ -5,12 +5,12 @@ import com.volunteer.dto.request.RequestListResponse;
 import com.volunteer.dto.request.RequestStatusUpdateRequest;
 import com.volunteer.dto.request.MessageResponse;
 import com.volunteer.entity.*;
+import com.volunteer.enums.EEventStatus;
+import com.volunteer.enums.ERequestType;
 import com.volunteer.enums.RequestStatus;
 import com.volunteer.enums.Role;
 import com.volunteer.exception.ResourceNotFoundException;
-import com.volunteer.repository.RequestRepository;
-import com.volunteer.repository.OrganizationRepository;
-import com.volunteer.repository.VolunteerRepository;
+import com.volunteer.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +29,10 @@ public class RequestService {
 
     @Autowired
     private RequestRepository requestRepository;
+    @Autowired
+    private CharityEventRepository charityEventRepository;
+    @Autowired
+    private DonationEventRepository donationEventRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -89,6 +94,26 @@ public class RequestService {
 //                throw new IllegalArgumentException("Deny reason is required when rejecting a request");
 //            }
 //            existingRequest.setDenyReason(request.getDenyReason());
+            if (existingRequest.getRequestType() == ERequestType.CHARITY_REGISTRATION
+                    && existingRequest.getCharityEvent() != null) {
+
+                CharityEvent charityEvent = existingRequest.getCharityEvent();
+                charityEvent.setEventStatus(EEventStatus.INACTIVE);
+                charityEventRepository.save(charityEvent);
+
+                logger.info("Charity event id={} set to INACTIVE due to request rejection", charityEvent.getId());
+            }
+
+            // Nếu là DONATION_REGISTRATION thì cập nhật tương tự
+            if (existingRequest.getRequestType() == ERequestType.DONATION_REGISTRATION
+                    && existingRequest.getDonationEvent() != null) {
+
+                DonationEvent donationEvent = existingRequest.getDonationEvent();
+                donationEvent.setEventStatus(EEventStatus.INACTIVE);
+                donationEventRepository.save(donationEvent);
+
+                logger.info("Donation event id={} set to INACTIVE due to request rejection", donationEvent.getId());
+            }
         } else if (request.getStatus() == RequestStatus.APPROVED) {
             // Clear deny reason when approving
 //            existingRequest.setDenyReason(null);
@@ -100,6 +125,24 @@ public class RequestService {
                     volunteer.getAccount().setRole(Role.ROLE_ORGANIZATION);
                     volunteerRepository.save(volunteer);
                 }
+            }
+
+            // Nếu là CHARITY_REGISTRATION -> kích hoạt sự kiện
+            if (existingRequest.getRequestType() == ERequestType.CHARITY_REGISTRATION
+                    && existingRequest.getCharityEvent() != null) {
+                CharityEvent charityEvent = existingRequest.getCharityEvent();
+                charityEvent.setEventStatus(EEventStatus.ACTIVE);
+                charityEventRepository.save(charityEvent);
+                logger.info("Charity event id={} set to ACTIVE", charityEvent.getId());
+            }
+
+            // Nếu là DONATION_REGISTRATION -> kích hoạt sự kiện
+            if (existingRequest.getRequestType() == ERequestType.DONATION_REGISTRATION
+                    && existingRequest.getDonationEvent() != null) {
+                DonationEvent donationEvent = existingRequest.getDonationEvent();
+                donationEvent.setEventStatus(EEventStatus.ACTIVE);
+                donationEventRepository.save(donationEvent);
+                logger.info("Donation event id={} set to ACTIVE", donationEvent.getId());
             }
         }
 
@@ -172,6 +215,7 @@ public class RequestService {
         response.setRequestType(request.getRequestType());
         response.setStatus(request.getStatus());
         response.setDenyReason(request.getDenyReason());
+        response.setEditReason(request.getEditReason());
         response.setCreatedAt(request.getCreatedAt());
         response.setUpdatedAt(request.getUpdatedAt());
 
@@ -204,6 +248,32 @@ public class RequestService {
             if (volunteer.getAccount() != null) {
                 response.setVolunteerEmail(volunteer.getAccount().getEmail());
             }
+        }
+
+        // Charity Event info (if any)
+        if (request.getCharityEvent() != null) {
+            CharityEvent charity = request.getCharityEvent();
+            response.setCharityEventId(charity.getId());
+            response.setCharityEventName(charity.getCharityName());
+            response.setNumberOfVolunteers(charity.getNumVolunteerRequire());
+            response.setDestination(charity.getDestination());
+            response.setCharityDescription(charity.getDescription());
+            response.setCharityToDo(charity.getTodo());
+            response.setCharityRequire(charity.getRequirement());
+            response.setCharityEventDateStart(charity.getDateStart());
+            response.setCharityEventDateEnd(charity.getDateEnd());
+        }
+
+        // Donation Event info (if any)
+        if (request.getDonationEvent() != null) {
+            DonationEvent donation = request.getDonationEvent();
+            response.setDonationEventId(donation.getId());
+            response.setDonationEventName(donation.getTitle());
+            response.setMoneyNeed(donation.getMoneyNeed());
+            response.setDonationDescription(donation.getDescription());
+            response.setBankAccount(donation.getBankAccount());
+            response.setDonationEventDateStart(donation.getDateStart());
+            response.setDonationEventDateEnd(donation.getDateEnd());
         }
 
         return response;

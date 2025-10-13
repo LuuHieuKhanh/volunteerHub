@@ -4,6 +4,7 @@ import com.volunteer.enums.ERequestType;
 import com.volunteer.enums.RequestStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,6 +14,7 @@ public class RequestDetailResponse {
     private ERequestType requestType;
     private RequestStatus status;
     private String denyReason;
+    private String editReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -38,4 +40,25 @@ public class RequestDetailResponse {
     private String volunteerAvatar;
     private LocalDateTime volunteerCreatedAt;
     private LocalDateTime volunteerUpdatedAt;
+
+
+    // Charity event info
+    private Long charityEventId;
+    private String charityEventName;
+    private String destination;
+    private Long numberOfVolunteers;
+    private String charityDescription;
+    private String charityToDo;
+    private String charityRequire;
+    private LocalDateTime charityEventDateStart;
+    private LocalDateTime charityEventDateEnd;
+
+    // Donation event info
+    private Long donationEventId;
+    private String donationEventName;
+    private BigDecimal moneyNeed;
+    private String bankAccount;
+    private String donationDescription;
+    private LocalDateTime donationEventDateStart;
+    private LocalDateTime donationEventDateEnd;
 }

@@ -116,7 +116,10 @@ public class DonationEventService {
         logger.info("Fetching donation event by id: {}", id);
         DonationEvent event = donationEventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Donation event not found with id: " + id));
-        return toResponse(event, BigDecimal.valueOf(0));
+
+        BigDecimal totalDonated = volunteerDonationRepository.getTotalDonationByEvent(id);
+
+        return toResponse(event, totalDonated);
     }
 
     public List<DonationEventResponse> getListDonation() {
