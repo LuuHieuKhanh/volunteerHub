@@ -7,6 +7,7 @@ import com.volunteer.repository.VolunteerRepository;
 import com.volunteer.security.jwt.JwtUtils;
 import com.volunteer.security.services.UserDetailsServiceImple;
 import com.volunteer.service.AuthService;
+import com.volunteer.service.PasswordResetService;
 import com.volunteer.service.VolunteerService;
 import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;

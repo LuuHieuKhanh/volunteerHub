@@ -54,9 +54,11 @@ public class EventController {
     }
 
     @GetMapping("/charity/volunteer/{volunteerId}/history")
-    public ResponseEntity<List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse>> getVolunteerCharityEventHistory(@PathVariable("volunteerId") Long volunteerId) {
+    public ResponseEntity<List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse>> getVolunteerCharityEventHistory(@PathVariable("volunteerId") Long volunteerId,
+                                                                                                                                @RequestParam(value = "search", required = false) String search
+                                                                                                                                ) {
         logger.info("Get volunteer charity eve/charity/volunteer/{volunteerId}/historynt history endpoint called for volunteer id: {}", volunteerId);
-        List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse> response = charityEventService.getVolunteerCharityEventHistory(volunteerId);
+        List<com.volunteer.dto.charity.VolunteerCharityEventHistoryResponse> response = charityEventService.getVolunteerCharityEventHistory(volunteerId, search);
         return ResponseEntity.ok(response);
     }
 

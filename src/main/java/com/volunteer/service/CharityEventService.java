@@ -536,12 +536,32 @@ public class CharityEventService {
         return response;
     }
 
-    public List<VolunteerCharityEventHistoryResponse> getVolunteerCharityEventHistory(Long volunteerId) {
+    public List<VolunteerCharityEventHistoryResponse> getVolunteerCharityEventHistory(Long volunteerId, String search) {
         logger.info("Getting charity event history for volunteer id: {}", volunteerId);
 
         List<VolunteerCharityEvent> participations = volunteerCharityEventRepository.findByVolunteer_Id(volunteerId);
 
         return participations.stream()
+                // ✅ Nếu có search thì lọc
+                .filter(participation -> {
+                    if (search == null || search.trim().isEmpty()) {
+                        return true;
+                    }
+                    String keyword = search.trim().toLowerCase();
+                    CharityEvent event = participation.getCharityEvent();
+                    if (event == null) return false;
+
+                    boolean matchEventName = event.getCharityName() != null &&
+                            event.getCharityName().toLowerCase().contains(keyword);
+                    boolean matchDescription = event.getDescription() != null &&
+                            event.getDescription().toLowerCase().contains(keyword);
+                    boolean matchOrg = event.getOrganization() != null &&
+                            event.getOrganization().getOrganizationName() != null &&
+                            event.getOrganization().getOrganizationName().toLowerCase().contains(keyword);
+
+                    return matchEventName || matchDescription || matchOrg;
+                })
+                // ✅ Map sang response
                 .map(participation -> {
                     VolunteerCharityEventHistoryResponse response = new VolunteerCharityEventHistoryResponse();
 

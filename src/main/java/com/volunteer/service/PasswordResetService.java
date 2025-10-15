@@ -58,7 +58,7 @@ public class PasswordResetService {
         password.append(SPECIAL_CHARS.charAt(random.nextInt(SPECIAL_CHARS.length())));
 
         // Tạo độ dài ngẫu nhiên từ 6-40 ký tự (đã có 4 ký tự đầu)
-        int remainingLength = 6 + random.nextInt(35); // 6-40 ký tự
+        int remainingLength = 6 + random.nextInt(3); // 6-40 ký tự
 
         // Thêm các ký tự ngẫu nhiên cho phần còn lại
         for (int i = 4; i < remainingLength; i++) {
