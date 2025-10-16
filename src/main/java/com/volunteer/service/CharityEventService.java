@@ -235,6 +235,10 @@ public class CharityEventService {
         CharityEvent event = charityEventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
+        if(event.getEventStatus() != EEventStatus.ACTIVE) {
+            throw new RuntimeException("This program is not active");
+        }
+
         Volunteer volunteer = volunteerRepository.findById(volunteerId)
                 .orElseThrow(() -> new RuntimeException("Volunteer not found"));
 
