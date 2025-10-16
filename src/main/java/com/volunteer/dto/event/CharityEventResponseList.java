@@ -37,5 +37,6 @@ public class CharityEventResponseList {
         private Long id;
         private String name;
         private String avatar; // map từ logo
+        private String reason;
     }
 }

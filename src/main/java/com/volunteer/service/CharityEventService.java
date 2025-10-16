@@ -225,6 +225,7 @@ public class CharityEventService {
                         .avatar(Optional.ofNullable(event.getOrganization().getLogo())
                                 .map(localStorageService::getFullFileUrl)
                                 .orElse(null))
+                        .reason(event.getRequests().getLast().getDenyReason())
                         .build())
                 .joined(joined)
                 .build();
