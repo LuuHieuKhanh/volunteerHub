@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -269,6 +270,15 @@ public class OrganizationService {
             followed = false;
         }
 
+        List<Request> requests = requestRepository.findCharityEventsByVolunteerAndRequestType(organizationId);
+        logger.info("Requests found for volunteer {}: {}", volunteerId, requests);
+
+        String denyReason = requests.stream()
+                .map(Request::getDenyReason)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+
         List<CharityEvent> orgEvents = charityEventRepository.findByOrganization_Id(organizationId);
 
         List<CharityEventResponseList> charities = orgEvents.stream().map(event -> {
@@ -335,6 +345,7 @@ public class OrganizationService {
                 .certificate(localStorageService.getFullFileUrl(org.getCertificate()))
                 .contact(org.getVolunteer().getContact())
                 .followed(followed)
+                .reason(denyReason)
                 .charities(charities)
                 .donations(donations)
                 .build();

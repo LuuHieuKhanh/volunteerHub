@@ -23,6 +23,7 @@ public class DetailResponse {
     private String address;
     private String owner;
     private boolean followed; // volunteer đã follow org chưa
+    private String reason;
     private List<CharityEventResponseList> charities;
     private List<DonationEventResponse> donations; // 👈 thêm ở đây
 

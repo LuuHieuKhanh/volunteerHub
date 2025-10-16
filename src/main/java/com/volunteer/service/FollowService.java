@@ -20,6 +20,8 @@ public class FollowService {
     private final VolunteerRepository volunteerRepository;
     private final OrganizationRepository organizationRepository;
 
+    private final LocalStorageService localStorageService;
+
     public void followOrganization(Long volunteerId, Long organizationId) {
         if (followRepository.existsByVolunteerIdAndOrganizationId(volunteerId, organizationId)) {
             throw new RuntimeException("Already followed this organization");
@@ -54,7 +56,7 @@ public class FollowService {
                         .id(f.getOrganization().getId())
                         .organizationName(f.getOrganization().getOrganizationName())
                         .description(f.getOrganization().getDescription())
-                        .logo(f.getOrganization().getLogo())
+                        .logo(localStorageService.getFullFileUrl(f.getOrganization().getLogo()))
                         .build())
                 .collect(Collectors.toList());
     }

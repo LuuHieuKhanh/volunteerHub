@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class CharityEventService {
         }
 
         events = events.stream()
-                .filter(e -> e.getEventStatus() != EEventStatus.PENDING)
+                .filter(e -> e.getEventStatus() != EEventStatus.PENDING && e.getEventStatus() != EEventStatus.CLOSED)
                 .filter(e -> !e.getOrganization().isDeleted())
                 .toList();
 
@@ -209,6 +210,16 @@ public class CharityEventService {
             joined = volunteerCharityEventRepository.existsByVolunteerIdAndCharityEventId(volunteerId, event.getId());
         }
 
+        List<Request> requests = requestRepository.findCharityEventsByVolunteerAndRequestType(event.getOrganization().getId());
+        logger.info("Requests found for volunteer {}: {}", volunteerId, requests);
+
+        String denyReason = requests.stream()
+                .map(Request::getDenyReason)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+
+
         return CharityEventResponseList.builder()
                 .id(event.getId())
                 .pic(localStorageService.getFullFileUrl(event.getPic()))
@@ -221,13 +232,14 @@ public class CharityEventService {
                 .dateEnd(event.getDateEnd())
                 .numVolunteerRequire(event.getNumVolunteerRequire())
                 .numVolunteerActual(event.getNumVolunteerActual())
+                .status(event.getEventStatus())
                 .organization(CharityEventResponseList.OrganizationDto.builder()
                         .id(event.getOrganization().getId())
                         .name(event.getOrganization().getOrganizationName())
                         .avatar(Optional.ofNullable(event.getOrganization().getLogo())
                                 .map(localStorageService::getFullFileUrl)
                                 .orElse(null))
-                        .reason(event.getRequests().getLast().getDenyReason())
+                        .reason(denyReason)
                         .build())
                 .joined(joined)
                 .build();

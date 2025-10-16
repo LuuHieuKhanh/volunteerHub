@@ -30,4 +30,14 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByOrganization_OrganizationNameContainingIgnoreCase(String organizationName);
 
     Long countByStatus(RequestStatus status);
+
+    @Query("""
+SELECT r
+FROM Request r
+WHERE r.organization.id = :volunteerId
+  AND r.requestType = 'ORGANIZATION_REGISTRATION'
+  AND r.status = 'APPROVED'
+""")
+    List<Request> findCharityEventsByVolunteerAndRequestType(@Param("volunteerId") Long volunteerId);
+
 }
