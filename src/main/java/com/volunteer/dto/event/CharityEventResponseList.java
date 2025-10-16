@@ -1,5 +1,6 @@
 package com.volunteer.dto.event;
 
+import com.volunteer.enums.EEventStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +24,7 @@ public class CharityEventResponseList {
     private LocalDateTime dateEnd;
     private Long numVolunteerRequire;
     private Long numVolunteerActual;
+    private EEventStatus status;
 
     private OrganizationDto organization;
 

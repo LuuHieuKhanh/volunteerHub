@@ -57,6 +57,7 @@ public class CharityEventService {
 
         events = events.stream()
                 .filter(e -> e.getEventStatus() != EEventStatus.PENDING)
+                .filter(e -> !e.getOrganization().isDeleted())
                 .toList();
 
         return events.stream().map(event -> {
@@ -77,6 +78,7 @@ public class CharityEventService {
                     .dateStart(event.getDateStart())
                     .numVolunteerRequire(event.getNumVolunteerRequire())
                     .numVolunteerActual(event.getNumVolunteerActual())
+                    .status(event.getEventStatus())
                     .organization(CharityEventResponseList.OrganizationDto.builder()
                             .id(event.getOrganization().getId())
                             .name(event.getOrganization().getOrganizationName())
