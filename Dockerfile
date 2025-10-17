@@ -1,13 +1,12 @@
-# 🏗️ Stage 1: Build JAR
-FROM maven:3.9-eclipse-temurin-21 AS builder
+# Stage 1: Build
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
+COPY . .
+RUN ./mvnw clean package -DskipTests
 
-# 🚀 Stage 2: Run the app
-FROM eclipse-temurin:21-jdk-alpine
+# Stage 2: Run
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/volunteer-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
