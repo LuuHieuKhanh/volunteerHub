@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: charity-app-frontend
+    container_name: charity-app-backend
     ports:
       - "8080:8080"
     depends_on:

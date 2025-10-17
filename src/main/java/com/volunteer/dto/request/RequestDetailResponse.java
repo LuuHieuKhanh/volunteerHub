@@ -50,6 +50,7 @@ public class RequestDetailResponse {
     private String charityDescription;
     private String charityToDo;
     private String charityRequire;
+    private String charityPic;
     private LocalDateTime charityEventDateStart;
     private LocalDateTime charityEventDateEnd;
 
@@ -59,6 +60,7 @@ public class RequestDetailResponse {
     private BigDecimal moneyNeed;
     private String bankAccount;
     private String donationDescription;
+    private String donationPic;
     private LocalDateTime donationEventDateStart;
     private LocalDateTime donationEventDateEnd;
 }

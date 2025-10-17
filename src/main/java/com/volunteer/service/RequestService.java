@@ -262,6 +262,7 @@ public class RequestService {
             response.setCharityRequire(charity.getRequirement());
             response.setCharityEventDateStart(charity.getDateStart());
             response.setCharityEventDateEnd(charity.getDateEnd());
+            response.setCharityPic(localStorageService.getFullFileUrl(charity.getPic()));
         }
 
         // Donation Event info (if any)
@@ -274,6 +275,7 @@ public class RequestService {
             response.setBankAccount(donation.getBankAccount());
             response.setDonationEventDateStart(donation.getDateStart());
             response.setDonationEventDateEnd(donation.getDateEnd());
+            response.setDonationPic(localStorageService.getFullFileUrl(donation.getPic()));
         }
 
         return response;
