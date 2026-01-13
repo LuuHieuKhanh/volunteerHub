@@ -1,0 +1,35 @@
+services:
+  volunteer-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: charity-app-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    restart: unless-stopped
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "User12345678"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - sqlserver
+    volumes:
+      - ./init.sql:/init.sql
+    entrypoint: /bin/bash -c "
+      sleep 20 &&
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P User12345678 -d master -i /init.sql
+      "
+volumes:
+  sqlserver-data:

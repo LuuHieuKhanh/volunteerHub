@@ -1,8 +1,10 @@
 package com.volunteer.entity;
 
+import com.volunteer.enums.EEventStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "charity_events")
@@ -10,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CharityEvent {
+public class CharityEvent extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,6 +26,12 @@ public class CharityEvent {
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String todo;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String requirement;
 
     @Column(length = 255)
     private String destination;
@@ -46,6 +54,29 @@ public class CharityEvent {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String pic;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false, length = 50)
-    private String eventStatus;
+    private EEventStatus eventStatus = EEventStatus.upcoming;
+
+    @OneToMany(mappedBy = "charityEvent")
+    private List<VolunteerCharityEvent> participants;
+
+    @OneToMany(mappedBy = "charityEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Request> requests;
+
+    public void increaseVolunteerCount() {
+        if (this.numVolunteerActual == null) {
+            this.numVolunteerActual = 0L;
+        }
+        this.numVolunteerActual++;
+    }
+
+    public void decreaseVolunteerCount() {
+        if (this.numVolunteerActual == null) {
+            this.numVolunteerActual = 0L;
+        }
+        if (this.numVolunteerActual > 0) {
+            this.numVolunteerActual--;
+        }
+    }
 } 

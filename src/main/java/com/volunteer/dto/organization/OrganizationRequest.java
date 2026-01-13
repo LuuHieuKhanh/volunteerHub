@@ -9,7 +9,11 @@ public class OrganizationRequest {
     @NotBlank
     private String organizationName;
 
-    private String description;
+    private String description = "";
+
+    private String logo = "";
+
+    private String certificate = "";
 
     @NotNull
     private Long volunteerId;

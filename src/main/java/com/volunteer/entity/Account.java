@@ -1,5 +1,6 @@
 package com.volunteer.entity;
 
+import com.volunteer.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Account {
+public class Account extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,13 +22,12 @@ public class Account {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.ROLE_USER;
 
     @Column(nullable = false)
     private boolean isActive = true;
-
-    private LocalDateTime deletedAt;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Volunteer volunteer;

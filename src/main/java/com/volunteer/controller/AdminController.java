@@ -2,19 +2,29 @@ package com.volunteer.controller;
 
 import com.volunteer.dto.auth.MessageResponse;
 import com.volunteer.dto.request.RequestResponse;
-import com.volunteer.dto.volunteer.VolunteerResponse;
+import com.volunteer.dto.request.RequestStatusUpdateRequest;
+import com.volunteer.dto.volunteer.*;
+import com.volunteer.dto.organization.*;
+import com.volunteer.entity.Account;
 import com.volunteer.entity.Volunteer;
 import com.volunteer.entity.Request;
+import com.volunteer.exception.ResourceNotFoundException;
+import com.volunteer.repository.AccountRepository;
 import com.volunteer.repository.OrganizationRepository;
 import com.volunteer.repository.RequestRepository;
 import com.volunteer.repository.VolunteerRepository;
-import com.volunteer.service.RequestService;
-import com.volunteer.service.VolunteerService;
+import com.volunteer.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,18 +32,29 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
     private VolunteerService volunteerService;
     @Autowired
+    private OrganizationService organizationService;
+    @Autowired
     private VolunteerRepository volunteerRepository;
+    @Autowired
+    private AccountRepository accountRepository;
     @Autowired
     private RequestRepository requestRepository;
     @Autowired
     private RequestService requestService;
     @Autowired
     private OrganizationRepository organizationRepository;
+    @Autowired
+    private AdminDashboardService adminDashboardService;
+    @Autowired
+    private DonationEventService donationEventService;
+    @Autowired
+    private CharityEventService charityEventService;
 
     // Get all volunteers (accounts)
     @GetMapping("/accounts")
@@ -47,24 +68,30 @@ public class AdminController {
 
     // Activate/deactivate a volunteer account
     @PutMapping("/accounts/{id}/status")
-    public ResponseEntity<MessageResponse> updateAccountStatus(@PathVariable Long id, @RequestParam boolean active) {
+    public ResponseEntity<MessageResponse> updateAccountStatus(@PathVariable("id") Long id, @RequestParam boolean active) {
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Volunteer not found"));
-        volunteer.setActive(active);
+        Account account = volunteer.getAccount();
+        if (account == null) {
+            throw new RuntimeException("Account not linked to this volunteer");
+        }
+
+        account.setActive(active);
+        accountRepository.save(account);
         volunteerRepository.save(volunteer);
         return ResponseEntity.ok(new MessageResponse("Account status updated"));
     }
 
     // Activate/deactivate user account
     @PutMapping("/accounts/{userId}/status")
-    public ResponseEntity<?> manageUserAccountStatus(@PathVariable Long userId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageUserAccountStatus(@PathVariable("userId") Long userId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement user account status management
         return ResponseEntity.ok("User account " + userId + " status updated");
     }
 
     // Upgrade user account to Admin role
     @PutMapping("/accounts/{userId}/role")
-    public ResponseEntity<?> upgradeUserToAdmin(@PathVariable Long userId, @RequestBody Object roleUpdateRequest) {
+    public ResponseEntity<?> upgradeUserToAdmin(@PathVariable("userId") Long userId, @RequestBody Object roleUpdateRequest) {
         // TODO: Implement role upgrade logic
         return ResponseEntity.ok("User " + userId + " upgraded to Admin role");
     }
@@ -73,54 +100,68 @@ public class AdminController {
     @GetMapping("/organization-upgrade-requests")
     public ResponseEntity<List<RequestResponse>> getAllUpgradeRequests() {
         List<Request> requests = requestRepository.findAll(); // You may want to filter by type/status
+
+        if (requests.isEmpty()) {
+            throw new ResourceNotFoundException("NOT FOUND");
+        }
+
         List<RequestResponse> response = requests.stream()
                 .map(req -> new RequestResponse(
-                        req.getId(),
-                        req.getRequestType(),
-                        req.getVolunteer() != null ? req.getVolunteer().getId() : null,
-                        req.getOrganization() != null ? req.getOrganization().getId() : null,
-                        req.getStatus(),
-                        req.getDenyReason(),
-                        req.getPic(),
-                        req.getRequestDate()
-                ))
+                req.getId(),
+                req.getOrganization().getOrganizationName(),
+                req.getVolunteer().getFullName(),
+                req.getVolunteer().getAccount().getEmail(),
+                req.getVolunteer().getContact(),
+                req.getOrganization().getDescription(),
+                req.getDenyReason(),
+                req.getOrganization().getLogo(),
+                req.getOrganization().getCertificate(),
+                req.getRequestType(),
+                req.getVolunteer().getId(),
+                req.getStatus(),
+                req.getUpdatedAt()
+        ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
 
     // Approve/reject an organization upgrade request
     @PostMapping("/organization-upgrade-requests/{requestId}/decision")
-    public ResponseEntity<MessageResponse> decideUpgradeRequest(@PathVariable Long requestId, @RequestParam boolean approve, @RequestParam(required = false) String reason) {
+    public ResponseEntity<MessageResponse> decideUpgradeRequest(@PathVariable("requestId") Long requestId, @RequestParam boolean approve, @RequestParam(required = false) String reason) {
+        RequestStatusUpdateRequest statusRequest = new RequestStatusUpdateRequest();
+
         if (approve) {
-            requestService.approveRequest(requestId);
-            return ResponseEntity.ok(new MessageResponse("Request approved"));
+            statusRequest.setStatus(com.volunteer.enums.RequestStatus.APPROVED);
+            statusRequest.setDenyReason(null);
         } else {
-            requestService.rejectRequest(requestId, reason != null ? reason : "Rejected by admin");
-            return ResponseEntity.ok(new MessageResponse("Request rejected"));
+            statusRequest.setStatus(com.volunteer.enums.RequestStatus.REJECTED);
+            statusRequest.setDenyReason(reason != null ? reason : "Rejected by admin");
         }
+
+        com.volunteer.dto.request.MessageResponse response = requestService.updateRequestStatus(requestId, statusRequest);
+        return ResponseEntity.ok(new MessageResponse(response.getMessage()));
     }
 
     // Approve/reject organization upgrade request
     @PutMapping("/organization-upgrade-requests/{requestId}/decision")
-    public ResponseEntity<?> manageOrganizationUpgradeRequest(@PathVariable Long requestId, @RequestBody Object decisionRequest) {
+    public ResponseEntity<?> manageOrganizationUpgradeRequest(@PathVariable("requestId") Long requestId, @RequestBody Object decisionRequest) {
         // TODO: Implement organization upgrade request decision logic
         return ResponseEntity.ok("Organization upgrade request " + requestId + " decision updated");
     }
 
     // Approve/reject organization
     @PutMapping("/organizations/{orgId}/status")
-    public ResponseEntity<?> manageOrganizationStatus(@PathVariable Long orgId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageOrganizationStatus(@PathVariable("orgId") Long orgId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement organization status management
         return ResponseEntity.ok("Organization " + orgId + " status updated");
     }
 
-    // View all organizations
-    @GetMapping("/organizations")
-    public ResponseEntity<List<?>> getAllOrganizations() {
-        // TODO: Return all organizations
-        return ResponseEntity.ok(List.of());
-    }
-
+    // This endpoint is replaced by the one below with search functionality
+    // @GetMapping("/organizations")
+    // public ResponseEntity<List<?>> getAllOrganizations() {
+    //     // TODO: Return all organizations
+    //     return ResponseEntity.ok(List.of());
+    // }
     // View all events (charity and donation)
     @GetMapping("/events")
     public ResponseEntity<List<?>> getAllEvents() {
@@ -130,30 +171,63 @@ public class AdminController {
 
     // Approve/reject event
     @PutMapping("/events/{eventId}/status")
-    public ResponseEntity<?> manageEventStatus(@PathVariable Long eventId, @RequestBody Object statusUpdateRequest) {
+    public ResponseEntity<?> manageEventStatus(@PathVariable("eventId") Long eventId, @RequestBody Object statusUpdateRequest) {
         // TODO: Implement event status management
         return ResponseEntity.ok("Event " + eventId + " status updated");
     }
 
-    // View all requests
+    // ==================== REQUEST MANAGEMENT APIs ====================
+    /**
+     * Get all requests with search (no pagination) GET
+     * /api/admin/requests?search=keyword
+     */
     @GetMapping("/requests")
-    public ResponseEntity<List<?>> getAllRequests() {
-        // TODO: Return all requests
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.request.RequestListResponse>> getAllRequests(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all requests with search: {}", search);
+        List<com.volunteer.dto.request.RequestListResponse> requests = requestService.getAllRequests(search);
+        return ResponseEntity.ok(requests);
     }
 
-    // Approve/reject request
-    @PutMapping("/requests/{requestId}/decision")
-    public ResponseEntity<?> manageRequestDecision(@PathVariable Long requestId, @RequestBody Object decisionRequest) {
-        // TODO: Implement request decision logic
-        return ResponseEntity.ok("Request " + requestId + " decision updated");
+    /**
+     * Get request detail by ID GET /api/admin/requests/{id}
+     */
+    @GetMapping("/requests/{id}")
+    public ResponseEntity<com.volunteer.dto.request.RequestDetailResponse> getRequestDetail(@PathVariable("id") Long id) {
+        logger.info("Getting request detail for id: {}", id);
+        com.volunteer.dto.request.RequestDetailResponse request = requestService.getRequestDetail(id);
+        return ResponseEntity.ok(request);
+    }
+
+    /**
+     * Update request status (approve/reject) PUT
+     * /api/admin/requests/{id}/status
+     */
+    @PutMapping("/requests/{id}/status")
+    public ResponseEntity<MessageResponse> updateRequestStatus(
+            @PathVariable("id") Long id,
+            @RequestBody RequestStatusUpdateRequest request) {
+        logger.info("Updating request status for id: {}", id);
+        com.volunteer.dto.request.MessageResponse response = requestService.updateRequestStatus(id, request);
+        return ResponseEntity.ok(new MessageResponse(response.getMessage()));
     }
 
     // View user profile
     @GetMapping("/accounts/{userId}")
-    public ResponseEntity<?> getUserProfile(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserProfile(@PathVariable("userId") Long userId) {
         // TODO: Return user profile
         return ResponseEntity.ok("User profile for user " + userId);
+    }
+
+    // ==================== ADMIN DASHBOARD API ====================
+    /**
+     * Get admin dashboard data GET /api/admin/dashboard
+     */
+    @GetMapping("/dashboard")
+    public ResponseEntity<com.volunteer.dto.admin.AdminDashboardResponse> getDashboard() {
+        logger.info("Getting admin dashboard data");
+        com.volunteer.dto.admin.AdminDashboardResponse dashboard = adminDashboardService.getDashboardData();
+        return ResponseEntity.ok(dashboard);
     }
 
     // Get system statistics
@@ -164,30 +238,21 @@ public class AdminController {
     }
 
     // View all organization upgrade requests
-    @GetMapping("/organization-upgrade-requests")
-    public ResponseEntity<List<?>> getAllOrganizationUpgradeRequests() {
-        // TODO: Return all organization upgrade requests
-        return ResponseEntity.ok(List.of());
-    }
-
+//    @GetMapping("/organization-upgrade-requests")
+//    public ResponseEntity<List<?>> getAllOrganizationUpgradeRequests() {
+//        // TODO: Return all organization upgrade requests
+//        return ResponseEntity.ok(List.of());
+//    }
     // View all user accounts
-    @GetMapping("/accounts")
-    public ResponseEntity<List<?>> getAllUserAccounts() {
-        // TODO: Return all user accounts
-        return ResponseEntity.ok(List.of());
-    }
-
+//    @GetMapping("/accounts")
+//    public ResponseEntity<List<?>> getAllUserAccounts() {
+//        // TODO: Return all user accounts
+//        return ResponseEntity.ok(List.of());
+//    }
     // View all admin users
     @GetMapping("/admins")
     public ResponseEntity<List<?>> getAllAdmins() {
         // TODO: Return all admin users
-        return ResponseEntity.ok(List.of());
-    }
-
-    // View all volunteers
-    @GetMapping("/volunteers")
-    public ResponseEntity<List<?>> getAllVolunteers() {
-        // TODO: Return all volunteers
         return ResponseEntity.ok(List.of());
     }
 
@@ -198,25 +263,122 @@ public class AdminController {
         return ResponseEntity.ok(List.of());
     }
 
-    // View all charity events
+    // ==================== CHARITY EVENT MANAGEMENT APIs ====================
+    /**
+     * Get all charity events (no pagination) GET
+     * /api/admin/charity-events?search=keyword
+     */
     @GetMapping("/charity-events")
-    public ResponseEntity<List<?>> getAllCharityEvents() {
-        // TODO: Return all charity events
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.charity.CharityEventListResponse>> getAllCharityEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all charity events with search: {}", search);
+        List<com.volunteer.dto.charity.CharityEventListResponse> events = charityEventService.getAllCharityEvents(search);
+        return ResponseEntity.ok(events);
+    }
+
+    /**
+     * Get charity event detail by ID GET /api/admin/charity-events/{id}
+     */
+    @GetMapping("/charity-events/{id}")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventDetailResponse> getCharityEventDetail(@PathVariable("id") Long id) {
+        logger.info("Getting charity event detail for id: {}", id);
+        com.volunteer.dto.charity.CharityEventDetailResponse event = charityEventService.getCharityEventDetail(id);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Create charity event POST /api/admin/charity-events
+     */
+    @PostMapping("/charity-events")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> createCharityEvent(
+            @RequestBody com.volunteer.dto.charity.CharityEventCreateRequest request) {
+        logger.info("Creating charity event: {}", request.getCharityName());
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.createCharityEventAdmin(request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Update charity event PUT /api/admin/charity-events/{id}
+     */
+    @PutMapping("/charity-events/{id}")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> updateCharityEvent(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.charity.CharityEventUpdateRequest request) {
+        logger.info("Updating charity event id: {}", id);
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.updateCharityEvent(id, request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Soft delete charity event DELETE /api/admin/charity-events/{id}
+     */
+    @DeleteMapping("/charity-events/{id}")
+    public ResponseEntity<MessageResponse> deleteCharityEvent(@PathVariable("id") Long id) {
+        logger.info("Soft deleting charity event id: {}", id);
+        charityEventService.softDeleteCharityEvent(id);
+        return ResponseEntity.ok(new MessageResponse("Charity event deleted successfully"));
+    }
+
+    /**
+     * Update charity event status PUT /api/admin/charity-events/{id}/status
+     */
+    @PutMapping("/charity-events/{id}/status")
+    public ResponseEntity<com.volunteer.dto.charity.CharityEventListResponse> updateCharityEventStatus(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.charity.CharityEventStatusUpdateRequest request) {
+        logger.info("Updating charity event status for id: {}", id);
+        com.volunteer.dto.charity.CharityEventListResponse event = charityEventService.updateCharityEventStatus(id, request);
+        return ResponseEntity.ok(event);
     }
 
     // View all donation events
     @GetMapping("/donation-events")
-    public ResponseEntity<List<?>> getAllDonationEvents() {
-        // TODO: Return all donation events
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<com.volunteer.dto.donation.DonationEventListResponse>> getAllDonationEvents(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all donation events with search: {}", search);
+        List<com.volunteer.dto.donation.DonationEventListResponse> events = donationEventService.getAllDonationEvents(search);
+        return ResponseEntity.ok(events);
     }
 
-    // View all pending requests
-    @GetMapping("/pending-requests")
-    public ResponseEntity<List<?>> getAllPendingRequests() {
-        // TODO: Return all pending requests
-        return ResponseEntity.ok(List.of());
+    @GetMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventDetailResponse> getDonationEventDetail(@PathVariable("id") Long id) {
+        logger.info("Getting donation event detail for id: {}", id);
+        com.volunteer.dto.donation.DonationEventDetailResponse event = donationEventService.getDonationEventDetail(id);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Update donation event PUT /api/admin/donation-events/{id}
+     */
+    @PutMapping("/donation-events/{id}")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEvent(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventUpdateRequest request) {
+        logger.info("Updating donation event id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEventAdmin(id, request);
+        return ResponseEntity.ok(event);
+    }
+
+    /**
+     * Soft delete donation event DELETE /api/admin/donation-events/{id}
+     */
+    @DeleteMapping("/donation-events/{id}")
+    public ResponseEntity<MessageResponse> deleteDonationEvent(@PathVariable("id") Long id) {
+        logger.info("Soft deleting donation event id: {}", id);
+        donationEventService.softDeleteDonationEvent(id);
+        return ResponseEntity.ok(new MessageResponse("Donation event deleted successfully"));
+    }
+
+    /**
+     * Update donation event status PUT /api/admin/donation-events/{id}/status
+     */
+    @PutMapping("/donation-events/{id}/status")
+    public ResponseEntity<com.volunteer.dto.donation.DonationEventListResponse> updateDonationEventStatus(
+            @PathVariable("id") Long id,
+            @RequestBody com.volunteer.dto.donation.DonationEventStatusUpdateRequest request) {
+        logger.info("Updating donation event status for id: {}", id);
+        com.volunteer.dto.donation.DonationEventListResponse event = donationEventService.updateDonationEventStatus(id, request);
+        return ResponseEntity.ok(event);
     }
 
     // View all approved requests
@@ -337,4 +499,178 @@ public class AdminController {
         // TODO: Return all charity types
         return ResponseEntity.ok(List.of());
     }
-} 
+
+    // ========== VOLUNTEER MANAGEMENT APIs ==========
+    /**
+     * Get all volunteers with search (no pagination) GET
+     * /api/admin/volunteers?search=keyword
+     */
+    @GetMapping("/volunteers")
+    public ResponseEntity<List<VolunteerListResponse>> getAllVolunteers(
+            @RequestParam(value = "search", required = false) String search) {
+
+        logger.info("Getting all volunteers with search: {}", search);
+
+        List<VolunteerListResponse> volunteers = volunteerService.getAllVolunteers(search);
+        return ResponseEntity.ok(volunteers);
+    }
+
+    /**
+     * Get volunteer detail by ID GET /api/admin/volunteers/{id}
+     */
+    @GetMapping("/volunteers/{id}")
+    public ResponseEntity<VolunteerDetailResponse> getVolunteerDetail(@PathVariable("id") Long id) {
+        logger.info("Getting volunteer detail for id: {}", id);
+
+        VolunteerDetailResponse volunteer = volunteerService.getVolunteerDetail(id);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Create new volunteer POST /api/admin/volunteers
+     */
+    @PostMapping("/volunteers")
+    public ResponseEntity<VolunteerListResponse> createVolunteer(@RequestBody VolunteerCreateRequest request) {
+        logger.info("Creating new volunteer: {}", request.getEmail());
+
+        VolunteerListResponse volunteer = volunteerService.createVolunteerByAdmin(request);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Update volunteer PUT /api/admin/volunteers/{id}
+     */
+    @PutMapping("/volunteers/{id}")
+    public ResponseEntity<VolunteerListResponse> updateVolunteer(
+            @PathVariable("id") Long id,
+            @RequestBody VolunteerUpdateRequest request) {
+        logger.info("Updating volunteer id: {}", id);
+
+        VolunteerListResponse volunteer = volunteerService.updateVolunteerByAdmin(id, request);
+        return ResponseEntity.ok(volunteer);
+    }
+
+    /**
+     * Soft delete volunteer DELETE /api/admin/volunteers/{id}
+     */
+    @DeleteMapping("/volunteers/{id}")
+    public ResponseEntity<MessageResponse> deleteVolunteer(@PathVariable("id") Long id) {
+        logger.info("Soft deleting volunteer id: {}", id);
+
+        volunteerService.softDeleteVolunteerByAdmin(id);
+        return ResponseEntity.ok(new MessageResponse("Volunteer deleted successfully"));
+    }
+
+    /**
+     * Ban/Unban volunteer PUT /api/admin/volunteers/{id}/ban
+     */
+    @PutMapping("/volunteers/{id}/ban")
+    public ResponseEntity<MessageResponse> banVolunteer(
+            @PathVariable("id") Long id,
+            @RequestParam boolean banned) {
+        logger.info("Setting ban status for volunteer id: {} to {}", id, banned);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setIsBanned(banned);
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        String message = banned ? "Volunteer banned successfully" : "Volunteer unbanned successfully";
+        return ResponseEntity.ok(new MessageResponse(message));
+    }
+
+    /**
+     * Activate/Deactivate volunteer account PUT
+     * /api/admin/volunteers/{id}/status
+     */
+    @PutMapping("/volunteers/{id}/status")
+    public ResponseEntity<MessageResponse> updateVolunteerStatus(
+            @PathVariable("id") Long id,
+            @RequestParam boolean active) {
+        logger.info("Setting active status for volunteer id: {} to {}", id, active);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setIsActive(active);
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        String message = active ? "Volunteer activated successfully" : "Volunteer deactivated successfully";
+        return ResponseEntity.ok(new MessageResponse(message));
+    }
+
+    /**
+     * Change volunteer role PUT /api/admin/volunteers/{id}/role
+     */
+    @PutMapping("/volunteers/{id}/role")
+    public ResponseEntity<MessageResponse> updateVolunteerRole(
+            @PathVariable("id") Long id,
+            @RequestParam String role) {
+        logger.info("Changing role for volunteer id: {} to {}", id, role);
+
+        VolunteerUpdateRequest request = new VolunteerUpdateRequest();
+        request.setRole(com.volunteer.enums.Role.valueOf(role));
+        volunteerService.updateVolunteerByAdmin(id, request);
+
+        return ResponseEntity.ok(new MessageResponse("Volunteer role updated successfully"));
+    }
+
+    // ==================== ORGANIZATION MANAGEMENT APIs ====================
+    /**
+     * Get all organizations with search (no pagination) GET
+     * /api/admin/organizations?search=keyword
+     */
+    @GetMapping("/organizations")
+    public ResponseEntity<List<OrganizationListResponse>> getAllOrganizations(
+            @RequestParam(value = "search", required = false) String search) {
+        logger.info("Getting all organizations with search: {}", search);
+        List<OrganizationListResponse> organizations = organizationService.getAllOrganizations(search);
+        return ResponseEntity.ok(organizations);
+    }
+
+    /**
+     * Get organization detail by ID GET /api/admin/organizations/{id}
+     */
+    @GetMapping("/organizations/{id}")
+    public ResponseEntity<OrganizationDetailResponse> getOrganizationDetail(@PathVariable("id") Long id) {
+        logger.info("Getting organization detail for id: {}", id);
+        OrganizationDetailResponse organization = organizationService.getOrganizationDetail(id);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Create organization POST /api/admin/organizations
+     */
+    @PostMapping("/organizations")
+    public ResponseEntity<OrganizationListResponse> createOrganization(
+            @RequestBody OrganizationCreateRequest request) {
+        logger.info("Creating organization: {}", request.getOrganizationName());
+
+        // Check if current user is admin
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        OrganizationListResponse organization = organizationService.createOrganizationByAdmin(request, isAdmin);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Update organization PUT /api/admin/organizations/{id}
+     */
+    @PutMapping("/organizations/{id}")
+    public ResponseEntity<OrganizationListResponse> updateOrganization(
+            @PathVariable("id") Long id,
+            @RequestBody OrganizationUpdateRequest request) {
+        logger.info("Updating organization id: {}", id);
+        OrganizationListResponse organization = organizationService.updateOrganizationByAdmin(id, request);
+        return ResponseEntity.ok(organization);
+    }
+
+    /**
+     * Soft delete organization DELETE /api/admin/organizations/{id}
+     */
+    @DeleteMapping("/organizations/{id}")
+    public ResponseEntity<MessageResponse> deleteOrganization(@PathVariable("id") Long id) {
+        logger.info("Soft deleting organization id: {}", id);
+        organizationService.softDeleteOrganizationByAdmin(id);
+        return ResponseEntity.ok(new MessageResponse("Organization deleted successfully"));
+    }
+}

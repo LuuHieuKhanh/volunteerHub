@@ -1,7 +1,9 @@
 package com.volunteer.security;
 
+import com.volunteer.config.CustomAuthenticationFailureHandler;
 import com.volunteer.security.jwt.AuthEntryPointJwt;
 import com.volunteer.security.jwt.AuthTokenFilter;
+import com.volunteer.security.jwt.JwtUtils;
 import com.volunteer.security.services.UserDetailsServiceImple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -18,19 +20,32 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
-public class WebSecurityConfig {
+public class WebSecurityConfig implements WebMvcConfigurer {
+
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
     @Autowired
     private UserDetailsServiceImple userDetailsService;
 
+    @Autowired
+    private UserDetailsServiceImple userDetailsServiceImple;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    private CustomAuthenticationFailureHandler failureHandler;
+
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
+    public AuthTokenFilter authTokenFilter() {
+        return new AuthTokenFilter(jwtUtils, userDetailsService);
     }
 
     @Bean
@@ -43,31 +58,48 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/");
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authz -> authz
+                .requestMatchers(
+                        "/api/auth/signin",
+                        "/api/auth/signup",
+                        "/api/auth/reset-password",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/uploads/**"
+                ).permitAll()
+//                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
-            );
+                )
+                .formLogin(formLogin -> formLogin.failureHandler(failureHandler));
 
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("*"); // or specify your allowed origins
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true); // Cho phép gửi cookies/token
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-} 
+}

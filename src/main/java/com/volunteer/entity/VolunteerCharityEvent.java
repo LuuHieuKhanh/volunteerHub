@@ -1,5 +1,6 @@
 package com.volunteer.entity;
 
+import com.volunteer.enums.EJoinStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VolunteerCharityEvent {
+public class VolunteerCharityEvent extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,9 +26,10 @@ public class VolunteerCharityEvent {
     @JoinColumn(name = "charity_event_id", nullable = false)
     private CharityEvent charityEvent;
 
-    @Column(name = "join_date", nullable = false)
-    private LocalDateTime joinDate = LocalDateTime.now();
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "join_status", nullable = false, length = 50)
-    private String joinStatus = "REGISTERED";
-} 
+    private EJoinStatus joinStatus = EJoinStatus.REGISTERED;
+
+    @Column(name = "checkin", nullable = false, columnDefinition = "bit default 0")
+    private boolean checkin = false;
+}

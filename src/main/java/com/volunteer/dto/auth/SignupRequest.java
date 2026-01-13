@@ -1,7 +1,9 @@
 package com.volunteer.dto.auth;
 
+import com.volunteer.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -17,8 +19,8 @@ public class SignupRequest {
 
     @NotBlank
     @Size(min = 3, max = 50)
-    private String username;
+    private String fullName;
 
-    @NotBlank
-    private String role;
+    @NotNull
+    private Role role;
 } 

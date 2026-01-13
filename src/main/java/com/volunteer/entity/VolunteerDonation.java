@@ -1,19 +1,18 @@
 package com.volunteer.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "volunteer_donation", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"volunteer_id", "donation_event_id"})
-})
+@Table(name = "volunteer_donation")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VolunteerDonation {
+public class VolunteerDonation extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,10 +26,8 @@ public class VolunteerDonation {
     private DonationEvent donationEvent;
 
     @Column(name = "donate_amount", nullable = false, precision = 19, scale = 2)
+    @DecimalMin(value = "0.01", message = "Donation must be greater than 0")
     private BigDecimal donateAmount;
-
-    @Column(name = "donation_date", nullable = false)
-    private LocalDateTime donationDate = LocalDateTime.now();
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String note;
